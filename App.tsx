@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
@@ -11,21 +12,21 @@ import {
   Zap,
   Shield
 } from 'lucide-react';
-import { Product, User, Order } from './types';
-import { INITIAL_PRODUCTS } from './constants';
-import { supabase, isSupabaseConfigured } from './supabase';
+import { Product, User, Order } from './types.ts';
+import { INITIAL_PRODUCTS } from './constants.tsx';
+import { supabase, isSupabaseConfigured } from './supabase.ts';
 
 // Pages
-import Home from './pages/Home';
-import Marketplace from './pages/Marketplace';
-import ProductDetail from './pages/ProductDetail';
-import Dashboard from './pages/Dashboard';
-import AdminDashboard from './pages/AdminDashboard';
-import CoursePlayer from './pages/CoursePlayer';
-import StaticPage from './pages/StaticPage';
-import AuthModal from './components/AuthModal';
-import Requests from './pages/Requests';
-import Premium from './pages/Premium';
+import Home from './pages/Home.tsx';
+import Marketplace from './pages/Marketplace.tsx';
+import ProductDetail from './pages/ProductDetail.tsx';
+import Dashboard from './pages/Dashboard.tsx';
+import AdminDashboard from './pages/AdminDashboard.tsx';
+import CoursePlayer from './pages/CoursePlayer.tsx';
+import StaticPage from './pages/StaticPage.tsx';
+import AuthModal from './components/AuthModal.tsx';
+import Requests from './pages/Requests.tsx';
+import Premium from './pages/Premium.tsx';
 
 // Component to handle scroll to top on route change
 const ScrollToTop = () => {

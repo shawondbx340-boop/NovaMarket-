@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, ShieldAlert, Zap, AlertCircle } from 'lucide-react';
-import { User } from '../types';
-import { supabase, isSupabaseConfigured } from '../supabase';
+import { User } from '../types.ts';
+import { supabase, isSupabaseConfigured } from '../supabase.ts';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -26,7 +27,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, setUser }) => {
 
   const handleDiscordLogin = async () => {
     if (!isSupabaseConfigured) {
-      // Logic for when keys aren't added yet - show a clear message
       alert("Database keys are missing. Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your environment to enable real Discord OAuth.");
       return;
     }
@@ -40,7 +40,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, setUser }) => {
         }
       });
       if (error) throw error;
-      // Redirect happens automatically
     } catch (e: any) {
       alert(e.message || "Failed to initiate Discord Auth. Ensure your Supabase project has Discord Auth enabled.");
       setIsLoading(false);
