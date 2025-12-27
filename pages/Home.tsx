@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -65,7 +66,7 @@ const Home: React.FC<HomeProps> = ({ products }) => {
         setLatestRequests(parsed.slice(0, 3));
         setRequestCount(parsed.length);
       } else {
-        setRequestCount(0); // Zero demo fallback
+        setRequestCount(0); 
       }
     } catch (e) {}
   }, []);
@@ -144,55 +145,6 @@ const Home: React.FC<HomeProps> = ({ products }) => {
         </div>
       </section>
 
-      {/* Why Choose Nova Market Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
-        <div className="reveal-init text-center space-y-3">
-          <h2 className="text-4xl font-black tracking-tight">Why Choose <span className="text-indigo-500">Nova Market</span>?</h2>
-          <p className="text-slate-400 max-w-xl mx-auto font-medium">We set the gold standard for digital distribution and creator quality.</p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {[
-            { 
-              icon: <Award size={24} />, 
-              title: "Verified Quality", 
-              desc: "Every asset is manually reviewed for production readiness.",
-              color: "text-amber-400" 
-            },
-            { 
-              icon: <ShieldCheck size={24} />, 
-              title: "Secure Delivery", 
-              desc: "Instant cloud distribution with encrypted protocols.",
-              color: "text-indigo-400" 
-            },
-            { 
-              icon: <Globe size={24} />, 
-              title: "Global Reach", 
-              desc: "Connecting 50k+ creators with production houses worldwide.",
-              color: "text-emerald-400" 
-            },
-            { 
-              icon: <Heart size={24} />, 
-              title: "Creator First", 
-              desc: "Best-in-class revenue share and priority author support.",
-              color: "text-rose-400" 
-            },
-          ].map((item, i) => (
-            <div 
-              key={i} 
-              className="reveal-init p-10 rounded-[40px] glass-card space-y-6 border border-white/5 hover:border-indigo-500/20 transition-all group"
-              style={{ transitionDelay: `${i * 100}ms` }}
-            >
-              <div className={`w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center ${item.color} group-hover:scale-110 transition-transform ring-1 ring-white/5`}>
-                {item.icon}
-              </div>
-              <h3 className="text-lg font-black">{item.title}</h3>
-              <p className="text-slate-500 text-sm leading-relaxed font-medium">{item.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* Latest Resources */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         <div className="reveal-init flex justify-between items-end">
@@ -209,11 +161,17 @@ const Home: React.FC<HomeProps> = ({ products }) => {
             <Link 
               key={p.id} 
               to={`/product/${p.id}`} 
-              className="reveal-init group glass-card rounded-[40px] overflow-hidden hover:border-indigo-500/50 transition-all" 
+              className="reveal-init group glass-card rounded-[40px] overflow-hidden hover:border-indigo-500/50 transition-all relative" 
               style={{ transitionDelay: `${i * 100}ms` }}
             >
               <div className="aspect-[4/3] overflow-hidden relative">
                 <img src={p.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                {/* Dynamic Corner Badge */}
+                {p.badgeText && (
+                  <div className={`absolute top-4 left-4 px-3 py-1 rounded-xl text-[8px] font-black uppercase tracking-widest border shadow-xl backdrop-blur-md z-10 ${p.isFree ? 'bg-emerald-500/80 border-emerald-400 text-white' : 'bg-indigo-600/80 border-indigo-400 text-white'}`}>
+                    {p.badgeText}
+                  </div>
+                )}
               </div>
               <div className="p-8 space-y-4">
                 <div className="flex justify-between items-center">
@@ -235,61 +193,6 @@ const Home: React.FC<HomeProps> = ({ products }) => {
           )) : (
             <div className="col-span-full py-20 text-center border-2 border-dashed border-white/5 rounded-[40px] text-slate-700 font-black uppercase tracking-widest">
               Inventory currently empty
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Upgrade to Premium Block */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 reveal-init">
-        <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 rounded-[56px] p-12 md:p-24 text-center space-y-10 relative overflow-hidden group">
-          <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[radial-gradient(circle_at_50%_50%,#fff,transparent)]" />
-          
-          <div className="relative z-10 space-y-6">
-            <div className="inline-flex items-center gap-2 px-6 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white font-black text-[10px] uppercase tracking-widest">
-              <Crown size={14} className="fill-current" /> Nova Limited Membership
-            </div>
-            <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-tight">
-              Scale Your craft <br /> with Premium Access
-            </h2>
-            <p className="text-indigo-100 text-lg md:text-xl max-w-2xl mx-auto font-medium">
-              Unlimited access to 5,000+ premium assets, priority requests, and exclusive perks. Zero platform fees.
-            </p>
-            <div className="flex justify-center pt-4">
-              <Link to="/premium" className="px-10 py-5 bg-white text-indigo-600 rounded-[28px] font-black text-2xl shadow-2xl hover:scale-105 transition-all flex items-center gap-3 active:scale-95">
-                Go Premium <ArrowRight size={28} />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Latest Requests */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        <div className="reveal-init flex justify-between items-end">
-          <div className="space-y-2">
-            <h2 className="text-4xl font-black tracking-tight text-white">Community <span className="text-pink-500">Inquiries</span></h2>
-            <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">What the community wants next</p>
-          </div>
-          <Link to="/requests" className="text-pink-400 font-black hover:text-white transition-colors flex items-center gap-2 text-sm">
-            All Requests <ChevronRight size={18} />
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {latestRequests.length > 0 ? latestRequests.map((r, i) => (
-            <div key={r.id} className="reveal-init glass-card p-10 rounded-[40px] space-y-6 border border-white/5 hover:bg-slate-900 group" style={{ transitionDelay: `${i * 100}ms` }}>
-              <div className="flex items-center justify-between">
-                <span className="px-3 py-1 bg-slate-950 border border-white/5 rounded-lg text-[9px] font-black text-slate-400 uppercase tracking-widest">{r.category}</span>
-                <span className="flex items-center gap-1 text-[10px] font-black text-pink-400">
-                  <Zap size={12} className="fill-current" /> {r.votes} Support
-                </span>
-              </div>
-              <h3 className="text-2xl font-black text-white leading-tight group-hover:text-pink-400 transition-colors">{r.title}</h3>
-              <p className="text-slate-500 text-sm leading-relaxed line-clamp-2">{r.description}</p>
-            </div>
-          )) : (
-            <div className="col-span-3 py-20 text-center border-2 border-dashed border-white/5 rounded-[40px] text-slate-700 font-black uppercase tracking-widest">
-              Inquiry database idle
             </div>
           )}
         </div>

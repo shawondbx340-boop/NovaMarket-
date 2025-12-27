@@ -147,6 +147,12 @@ const Marketplace: React.FC<MarketplaceProps> = ({ products }) => {
                   alt={product.title}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
+                {/* Dynamic Corner Badge */}
+                {product.badgeText && (
+                  <div className={`absolute top-4 left-4 px-3 py-1 rounded-xl text-[8px] font-black uppercase tracking-widest border shadow-xl backdrop-blur-md z-10 ${product.isFree ? 'bg-emerald-500/80 border-emerald-400 text-white' : 'bg-indigo-600/80 border-indigo-400 text-white'}`}>
+                    {product.badgeText}
+                  </div>
+                )}
               </div>
               <div className="p-8 space-y-6 flex-grow flex flex-col justify-between">
                 <div className="space-y-3">
