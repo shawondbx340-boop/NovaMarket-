@@ -1,8 +1,9 @@
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App.tsx';
+import App from './App';
 
-console.log("NovaMarket: Initiating mount...");
+console.log("NovaMarket: Initiating mount with React 18.3.1...");
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

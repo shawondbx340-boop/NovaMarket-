@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
@@ -11,21 +12,21 @@ import {
   Zap,
   Shield
 } from 'lucide-react';
-import { Product, User, Order } from './types.ts';
-import { INITIAL_PRODUCTS } from './constants.tsx';
-import { supabase, isSupabaseConfigured } from './supabase.ts';
+import { Product, User, Order } from './types';
+import { INITIAL_PRODUCTS } from './constants';
+import { supabase, isSupabaseConfigured } from './supabase';
 
 // Pages
-import Home from './pages/Home.tsx';
-import Marketplace from './pages/Marketplace.tsx';
-import ProductDetail from './pages/ProductDetail.tsx';
-import Dashboard from './pages/Dashboard.tsx';
-import AdminDashboard from './pages/AdminDashboard.tsx';
-import CoursePlayer from './pages/CoursePlayer.tsx';
-import StaticPage from './pages/StaticPage.tsx';
-import AuthModal from './components/AuthModal.tsx';
-import Requests from './pages/Requests.tsx';
-import Premium from './pages/Premium.tsx';
+import Home from './pages/Home';
+import Marketplace from './pages/Marketplace';
+import ProductDetail from './pages/ProductDetail';
+import Dashboard from './pages/Dashboard';
+import AdminDashboard from './pages/AdminDashboard';
+import CoursePlayer from './pages/CoursePlayer';
+import StaticPage from './pages/StaticPage';
+import AuthModal from './components/AuthModal';
+import Requests from './pages/Requests';
+import Premium from './pages/Premium';
 
 // Component to handle scroll to top on route change
 const ScrollToTop = () => {
@@ -78,7 +79,6 @@ const App: React.FC = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Real-time Supabase Auth Listener
   useEffect(() => {
     if (!isSupabaseConfigured) return;
 
@@ -120,7 +120,6 @@ const App: React.FC = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Fetch Products from Supabase
   useEffect(() => {
     if (!isSupabaseConfigured) return;
 
@@ -148,7 +147,6 @@ const App: React.FC = () => {
     <Router>
       <ScrollToTop />
       <PurchaseNotification products={products} />
-      
       <div className="min-h-screen flex flex-col bg-slate-950 text-white selection:bg-indigo-500/30">
         {!isSupabaseConfigured && (
           <div className="bg-amber-600/10 border-b border-amber-600/20 px-4 py-2 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-amber-500">
@@ -191,35 +189,24 @@ const App: React.FC = () => {
                       <LayoutDashboard size={14} />
                       <span className="hidden xs:inline">Dashboard</span>
                     </Link>
-                    <button 
-                      onClick={handleLogout}
-                      className="p-2.5 rounded-2xl bg-slate-900 border border-white/5 text-slate-400 hover:text-rose-500 transition-all"
-                    >
+                    <button onClick={handleLogout} className="p-2.5 rounded-2xl bg-slate-900 border border-white/5 text-slate-400 hover:text-rose-500 transition-all">
                       <LogOut size={18} />
                     </button>
                   </div>
                 ) : (
-                  <button 
-                    onClick={() => setIsAuthModalOpen(true)}
-                    className="px-8 py-3 bg-indigo-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-500/20 active:scale-95"
-                  >
+                  <button onClick={() => setIsAuthModalOpen(true)} className="px-8 py-3 bg-indigo-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-500/20 active:scale-95">
                     Get Started
                   </button>
                 )}
-                
-                <button 
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="lg:hidden p-2.5 rounded-xl bg-slate-900 border border-white/5 text-slate-400"
-                >
+                <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="lg:hidden p-2.5 rounded-xl bg-slate-900 border border-white/5 text-slate-400">
                   {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Mobile Menu */}
           {isMobileMenuOpen && (
-            <div className="lg:hidden border-t border-white/5 bg-slate-900/90 backdrop-blur-2xl p-6 space-y-4 animate-in slide-in-from-top-4">
+            <div className="lg:hidden border-t border-white/5 bg-slate-900/90 backdrop-blur-2xl p-6 space-y-4">
               <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-black uppercase tracking-widest text-slate-400 hover:text-white">Home</Link>
               <Link to="/marketplace" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-black uppercase tracking-widest text-slate-400 hover:text-white">Resources</Link>
               <Link to="/requests" onClick={() => setIsMobileMenuOpen(false)} className="block text-sm font-black uppercase tracking-widest text-slate-400 hover:text-white">Requests</Link>
@@ -250,9 +237,7 @@ const App: React.FC = () => {
                   <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white text-lg">N</div>
                   <span>NOVA<span className="text-white">MARKET</span></span>
                 </Link>
-                <p className="text-slate-500 text-sm leading-relaxed font-medium">
-                  The premier digital distribution network for world-class creators and modern developers.
-                </p>
+                <p className="text-slate-500 text-sm leading-relaxed font-medium">The premier digital distribution network for creators.</p>
               </div>
               <div>
                 <h4 className="text-white font-black text-xs uppercase tracking-widest mb-6">Library</h4>
@@ -260,14 +245,11 @@ const App: React.FC = () => {
                   <li><Link to="/marketplace?category=Graphics" className="hover:text-white transition-colors">Graphics</Link></li>
                   <li><Link to="/marketplace?category=Courses" className="hover:text-white transition-colors">Courses</Link></li>
                   <li><Link to="/marketplace?category=Development" className="hover:text-white transition-colors">Development</Link></li>
-                  <li><Link to="/marketplace?category=E-books" className="hover:text-white transition-colors">E-books</Link></li>
                 </ul>
               </div>
               <div>
                 <h4 className="text-white font-black text-xs uppercase tracking-widest mb-6">Support</h4>
                 <ul className="space-y-4 text-slate-500 text-sm font-bold">
-                  <li><Link to="/p/contact" className="hover:text-white transition-colors">Contact</Link></li>
-                  <li><Link to="/p/faq" className="hover:text-white transition-colors">FAQ</Link></li>
                   <li><Link to="/p/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
                   <li><Link to="/p/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
                 </ul>
@@ -277,25 +259,16 @@ const App: React.FC = () => {
                 <ul className="space-y-4 text-slate-500 text-sm font-bold">
                   <li><Link to="/requests" className="hover:text-white transition-colors">Asset Requests</Link></li>
                   <li><Link to="/premium" className="hover:text-white transition-colors">Premium Membership</Link></li>
-                  <li><a href="#" className="hover:text-white transition-colors">Discord Server</a></li>
                 </ul>
               </div>
             </div>
-            <div className="mt-20 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
-              <p className="text-slate-600 text-[10px] font-black uppercase tracking-[0.2em]">© 2025 NOVAMARKET DIGITAL CORP. ALL RIGHTS RESERVED.</p>
-              <div className="flex gap-6 text-slate-600">
-                <a href="#" className="hover:text-white transition-colors"><Zap size={18} /></a>
-                <a href="#" className="hover:text-white transition-colors"><Shield size={18} /></a>
-              </div>
+            <div className="mt-20 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-slate-600">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em]">© 2025 NOVAMARKET DIGITAL CORP.</p>
+              <div className="flex gap-6"><Zap size={18} /><Shield size={18} /></div>
             </div>
           </div>
         </footer>
-
-        <AuthModal 
-          isOpen={isAuthModalOpen} 
-          onClose={() => setIsAuthModalOpen(false)} 
-          setUser={setUser} 
-        />
+        <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} setUser={setUser} />
       </div>
     </Router>
   );

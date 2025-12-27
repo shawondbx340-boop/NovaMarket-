@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -25,7 +26,6 @@
             background: #475569;
         }
 
-        /* Announcement Bar Marquee */
         @keyframes marquee {
             0% { transform: translateX(100%); }
             100% { transform: translateX(-100%); }
@@ -34,7 +34,6 @@
             animation: marquee 25s linear infinite;
         }
 
-        /* Enhanced Scroll Reveal System */
         .reveal-init {
             opacity: 0;
             transform: translateY(40px);
@@ -46,13 +45,6 @@
             opacity: 1;
             transform: translateY(0);
         }
-
-        /* Staggered Delays */
-        .delay-100 { transition-delay: 100ms; }
-        .delay-200 { transition-delay: 200ms; }
-        .delay-300 { transition-delay: 300ms; }
-        .delay-400 { transition-delay: 400ms; }
-        .delay-500 { transition-delay: 500ms; }
 
         @keyframes float {
             0% { transform: translate(-50%, -50%) translateY(0px); }
@@ -76,10 +68,10 @@
 <script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@19.0.0",
-    "react/": "https://esm.sh/react@19.0.0/",
-    "react-dom": "https://esm.sh/react-dom@19.0.0",
-    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
+    "react": "https://esm.sh/react@18.3.1",
+    "react/": "https://esm.sh/react@18.3.1/",
+    "react-dom": "https://esm.sh/react-dom@18.3.1",
+    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
     "lucide-react": "https://esm.sh/lucide-react@0.460.0?external=react",
     "recharts": "https://esm.sh/recharts@2.13.3?external=react,react-dom",
     "react-router-dom": "https://esm.sh/react-router-dom@6.28.0?external=react,react-dom",
