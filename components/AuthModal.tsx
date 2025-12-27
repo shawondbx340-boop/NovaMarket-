@@ -26,9 +26,6 @@ const DiscordIcon = () => (
 );
 
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, setUser }) => {
-  const navigate = useNavigate();
-  const [isAdminMode, setIsAdminMode] = useState(false);
-  const [adminKey, setAdminKey] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   if (!isOpen) return null;
@@ -49,24 +46,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, setUser }) => {
     }
   };
 
-  const handleAdminLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (adminKey === 'NOVA-ADMIN-2025') {
-      const adminUser: User = {
-        id: 'admin-001',
-        email: 'admin@nova.com',
-        name: 'System Admin',
-        role: 'admin',
-        purchasedIds: []
-      };
-      setUser(adminUser);
-      onClose();
-      navigate('/admin');
-    } else {
-      alert("Invalid Access Key.");
-    }
-  };
-
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/98 backdrop-blur-3xl overflow-y-auto">
       <div className="bg-slate-900 border border-white/5 w-full max-w-6xl min-h-[640px] rounded-[48px] shadow-2xl overflow-hidden animate-in zoom-in duration-500 my-auto flex flex-col lg:flex-row ring-1 ring-white/10 relative">
@@ -77,7 +56,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, setUser }) => {
           <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-indigo-600/15 blur-[130px] rounded-full translate-x-1/3 translate-y-1/3" />
         </div>
 
-        {/* Left Branding Pane (Website Data) */}
+        {/* Left Branding Pane */}
         <div className="lg:w-1/2 p-12 lg:p-20 flex flex-col justify-between relative z-10 border-b lg:border-b-0 lg:border-r border-white/5 bg-slate-900/40">
           <div className="space-y-10">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-[10px] font-black uppercase tracking-widest text-indigo-400 backdrop-blur-md">
@@ -112,7 +91,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, setUser }) => {
           </div>
         </div>
 
-        {/* Right Interaction Pane (Sign In) */}
+        {/* Right Interaction Pane */}
         <div className="lg:w-1/2 p-12 lg:p-20 flex flex-col justify-center items-center text-center relative z-10">
           <button 
             onClick={onClose} 
@@ -121,102 +100,59 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, setUser }) => {
             <X size={24} />
           </button>
 
-          {!isAdminMode ? (
-            <div className="w-full max-w-sm space-y-12">
-              <div className="space-y-3">
-                <h3 className="text-4xl font-black text-white tracking-tight">Sign In</h3>
-                <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-[10px]">Access Secure Node</p>
+          <div className="w-full max-w-sm space-y-12">
+            <div className="space-y-3">
+              <h3 className="text-4xl font-black text-white tracking-tight">Sign In</h3>
+              <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-[10px]">Access Secure Node</p>
+            </div>
+
+            <button 
+              onClick={handleDiscordLogin}
+              disabled={isLoading}
+              className="w-full py-6 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-3xl transition-all flex items-center justify-center gap-4 shadow-2xl shadow-indigo-600/20 group active:scale-[0.98] ring-1 ring-white/10"
+            >
+              {isLoading ? (
+                <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  <DiscordIcon />
+                  <span>Continue with Discord</span>
+                  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
+            </button>
+
+            <div className="space-y-8">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5"></div></div>
+                <div className="relative flex justify-center">
+                  <span className="bg-slate-900 px-4 text-[10px] font-black text-slate-700 uppercase tracking-[0.4em]">
+                    Secure Authentication
+                  </span>
+                </div>
               </div>
 
-              <button 
-                onClick={handleDiscordLogin}
-                disabled={isLoading}
-                className="w-full py-6 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-3xl transition-all flex items-center justify-center gap-4 shadow-2xl shadow-indigo-600/20 group active:scale-[0.98] ring-1 ring-white/10"
-              >
-                {isLoading ? (
-                  <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <DiscordIcon />
-                    <span>Continue with Discord</span>
-                    <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                  </>
-                )}
-              </button>
-
-              <div className="space-y-8">
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5"></div></div>
-                  <div className="relative flex justify-center">
-                    <span className="bg-slate-900 px-4 text-[10px] font-black text-slate-700 uppercase tracking-[0.4em]">
-                      Secure Authentication
-                    </span>
+              <div className="flex justify-center gap-4">
+                {[
+                  { icon: <Shield size={18} />, label: "Encrypted" },
+                  { icon: <Lock size={18} />, label: "Private" },
+                  { icon: <Zap size={18} />, label: "Fast" }
+                ].map((stat, i) => (
+                  <div key={i} className="flex flex-col items-center gap-2 w-24 py-5 rounded-3xl bg-slate-800/50 border border-white/5 hover:border-indigo-500/30 transition-all group">
+                    <div className="text-indigo-400 group-hover:scale-110 transition-transform">{stat.icon}</div>
+                    <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{stat.label}</span>
                   </div>
-                </div>
+                ))}
+              </div>
 
-                <div className="flex justify-center gap-4">
-                  {[
-                    { icon: <Shield size={18} />, label: "Encrypted" },
-                    { icon: <Lock size={18} />, label: "Private" },
-                    { icon: <Zap size={18} />, label: "Fast" }
-                  ].map((stat, i) => (
-                    <div key={i} className="flex flex-col items-center gap-2 w-24 py-5 rounded-3xl bg-slate-800/50 border border-white/5 hover:border-indigo-500/30 transition-all group">
-                      <div className="text-indigo-400 group-hover:scale-110 transition-transform">{stat.icon}</div>
-                      <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{stat.label}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="space-y-6 pt-4">
-                  <p className="text-[10px] text-slate-600 font-medium leading-relaxed">
-                    By accessing NovaMarket, you agree to our <br />
-                    <span className="text-indigo-400 cursor-pointer hover:underline">Terms of Service</span> and <span className="text-indigo-400 cursor-pointer hover:underline">Privacy Policy</span>
-                  </p>
-                  
-                  <button 
-                    onClick={() => setIsAdminMode(true)}
-                    className="text-[9px] font-black text-slate-800 uppercase tracking-[0.5em] hover:text-indigo-400 transition-colors pt-4 block w-full"
-                  >
-                    Staff Management Console
-                  </button>
-                </div>
+              <div className="space-y-6 pt-4">
+                <p className="text-[10px] text-slate-600 font-medium leading-relaxed">
+                  By accessing NovaMarket, you agree to our <br />
+                  <span className="text-indigo-400 cursor-pointer hover:underline">Terms of Service</span> and <span className="text-indigo-400 cursor-pointer hover:underline">Privacy Policy</span>
+                </p>
               </div>
             </div>
-          ) : (
-            <div className="w-full max-w-sm space-y-10 animate-in slide-in-from-bottom-4">
-               <div className="space-y-2">
-                <h3 className="text-4xl font-black text-white">Staff Login</h3>
-                <p className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Administrative Node Access</p>
-              </div>
-              <form onSubmit={handleAdminLogin} className="space-y-6">
-                <div className="space-y-3 text-left">
-                  <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Private Key</label>
-                  <input
-                    type="password"
-                    placeholder="Enter Staff Key..."
-                    required
-                    autoFocus
-                    value={adminKey}
-                    onChange={(e) => setAdminKey(e.target.value)}
-                    className="w-full px-6 py-5 bg-slate-800 border border-white/5 rounded-3xl outline-none focus:border-indigo-500 transition-all text-white font-mono placeholder:text-slate-800 text-center tracking-widest"
-                  />
-                </div>
-                <button 
-                  type="submit"
-                  className="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-3xl shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-3 text-lg"
-                >
-                  <ShieldAlert size={20} /> Authenticate
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => setIsAdminMode(false)}
-                  className="w-full text-slate-600 text-xs font-black uppercase tracking-[0.2em] hover:text-white transition-colors"
-                >
-                  Return to User Sign In
-                </button>
-              </form>
-            </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

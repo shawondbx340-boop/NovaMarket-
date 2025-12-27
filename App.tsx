@@ -84,8 +84,6 @@ const App: React.FC = () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
-          // If profiles table has a recursive policy, this might fail.
-          // We wrap it to ensure the app still identifies the user.
           let profile = null;
           try {
             const { data, error } = await supabase
@@ -95,7 +93,7 @@ const App: React.FC = () => {
               .single();
             if (!error) profile = data;
           } catch (e) {
-            console.warn("Could not fetch profile (possibly RLS recursion), using metadata fallback.");
+            console.warn("Could not fetch profile, using metadata fallback.");
           }
 
           const appUser: User = {
@@ -131,8 +129,7 @@ const App: React.FC = () => {
         };
         setUser(appUser);
       } else {
-        // If they were an admin via key, don't wipe them unless they explicitly log out
-        setUser(prev => prev?.id === 'admin-001' ? prev : null);
+        setUser(null);
       }
     });
 
