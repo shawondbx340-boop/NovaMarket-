@@ -1,5 +1,4 @@
-
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.46.1';
+import { createClient } from '@supabase/supabase-js';
 
 const getEnvVar = (name: string): string => {
   if (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env[name]) {
