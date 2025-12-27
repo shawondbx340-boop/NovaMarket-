@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
   Menu, 
@@ -9,7 +9,8 @@ import {
   Bell,
   AlertTriangle,
   Zap,
-  Shield
+  Shield,
+  RefreshCw
 } from 'lucide-react';
 import { Product, User, Order } from './types';
 import { INITIAL_PRODUCTS } from './constants';
@@ -76,65 +77,51 @@ const App: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  useEffect(() => {
+  const fetchSessionAndProfile = useCallback(async () => {
     if (!isSupabaseConfigured) return;
-
-    const fetchSessionAndProfile = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          let profile = null;
-          try {
-            const { data, error } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
-            if (!error) profile = data;
-          } catch (e) {
-            console.warn("Could not fetch profile, using metadata fallback.");
-          }
-
-          const appUser: User = {
-            id: session.user.id,
-            email: session.user.email || '',
-            name: profile?.name || session.user.user_metadata.full_name || 'User',
-            role: profile?.role || (session.user.email === 'admin@nova.com' ? 'admin' : 'user'),
-            purchasedIds: profile?.purchased_ids || []
-          };
-          setUser(appUser);
-        }
-      } catch (e) {
-        console.error("Supabase Auth Error:", e);
-      }
-    };
-
-    fetchSessionAndProfile();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    setIsSyncing(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        let profile = null;
-        try {
-          const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
-          profile = data;
-        } catch(e) {}
+        // Fetch the user's role from the database. 
+        // This is the source of truth.
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (error) {
+          console.warn("Database error fetching profile. RLS policy might be recursing.", error);
+        }
 
         const appUser: User = {
           id: session.user.id,
           email: session.user.email || '',
           name: profile?.name || session.user.user_metadata.full_name || 'User',
-          role: profile?.role || (session.user.email === 'admin@nova.com' ? 'admin' : 'user'),
+          role: profile?.role || 'user', // Default to user if DB fetch fails
           purchasedIds: profile?.purchased_ids || []
         };
         setUser(appUser);
-      } else {
-        setUser(null);
       }
+    } catch (e) {
+      console.error("Supabase Auth Error:", e);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSessionAndProfile();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      fetchSessionAndProfile();
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [fetchSessionAndProfile]);
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -218,7 +205,7 @@ const App: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <Link to={user.role === 'admin' ? "/admin" : "/dashboard"} className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-slate-900 border border-white/5 text-white font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all">
                       <LayoutDashboard size={14} />
-                      <span className="hidden xs:inline">Dashboard</span>
+                      <span className="hidden xs:inline">{user.role === 'admin' ? 'Admin' : 'Dashboard'}</span>
                     </Link>
                     <button onClick={handleLogout} className="p-2.5 rounded-2xl bg-slate-900 border border-white/5 text-slate-400 hover:text-rose-500 transition-all">
                       <LogOut size={18} />
@@ -251,7 +238,7 @@ const App: React.FC = () => {
             <Route path="/" element={<Home products={products} />} />
             <Route path="/marketplace" element={<Marketplace products={products} />} />
             <Route path="/product/:id" element={<ProductDetail products={products} user={user} orders={orders} setOrders={setOrders} setUser={setUser} />} />
-            <Route path="/dashboard" element={<Dashboard user={user} products={products} orders={orders} />} />
+            <Route path="/dashboard" element={<Dashboard user={user} products={products} orders={orders} refreshProfile={fetchSessionAndProfile} isSyncing={isSyncing} />} />
             <Route path="/admin/*" element={<AdminDashboard user={user} products={products} setProducts={setProducts} orders={orders} />} />
             <Route path="/course/:id" element={<CoursePlayer products={products} user={user} />} />
             <Route path="/requests" element={<Requests />} />

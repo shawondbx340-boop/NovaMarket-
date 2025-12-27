@@ -1,16 +1,17 @@
-
 import React, { useMemo } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { ShoppingBag, Clock, Download, Play, ExternalLink, Package } from 'lucide-react';
+import { ShoppingBag, Clock, Download, Play, ExternalLink, Package, RefreshCw, ShieldCheck } from 'lucide-react';
 import { User, Product, Order } from '../types';
 
 interface DashboardProps {
   user: User | null;
   products: Product[];
   orders: Order[];
+  refreshProfile: () => void;
+  isSyncing?: boolean;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user, products, orders }) => {
+const Dashboard: React.FC<DashboardProps> = ({ user, products, orders, refreshProfile, isSyncing }) => {
   if (!user) return <Navigate to="/" replace />;
 
   const purchasedProducts = useMemo(() => {
@@ -36,21 +37,27 @@ const Dashboard: React.FC<DashboardProps> = ({ user, products, orders }) => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-        <div className="space-y-2">
-          <h1 className="text-4xl font-black">Creator Dashboard</h1>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <h1 className="text-4xl font-black">Creator Dashboard</h1>
+            {user.role === 'admin' && (
+              <span className="px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-black uppercase tracking-widest rounded-lg flex items-center gap-2">
+                <ShieldCheck size={12} /> Admin Mode
+              </span>
+            )}
+          </div>
           <p className="text-slate-500">Welcome back, {user.name}. Manage your premium workspace.</p>
         </div>
-        <div className="flex gap-4">
-          <div className="px-6 py-4 bg-slate-800/40 border border-slate-700/50 rounded-3xl shadow-sm text-center">
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Library Assets</p>
-            <p className="text-3xl font-black">{purchasedProducts.length}</p>
-          </div>
-          <div className="px-6 py-4 bg-slate-800/40 border border-slate-700/50 rounded-3xl shadow-sm text-center">
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Investment</p>
-            <p className="text-3xl font-black">${userOrders.reduce((sum, o) => sum + o.amount, 0).toFixed(2)}</p>
-          </div>
-        </div>
+        
+        <button 
+          onClick={refreshProfile}
+          disabled={isSyncing}
+          className="flex items-center gap-2 px-6 py-3 bg-slate-900 border border-slate-800 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-400 hover:text-indigo-400 transition-all active:scale-95 disabled:opacity-50"
+        >
+          <RefreshCw size={14} className={isSyncing ? "animate-spin" : ""} />
+          {isSyncing ? 'Syncing...' : 'Refresh Profile'}
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">

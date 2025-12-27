@@ -35,7 +35,12 @@ interface AdminDashboardProps {
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, products, setProducts, orders }) => {
   const location = useLocation();
-  if (!user || user.role !== 'admin') return <Navigate to="/" replace />;
+  
+  // Strictly enforce admin role from the database
+  if (!user || user.role !== 'admin') {
+    console.log("Access Denied: User role is", user?.role);
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const isPathActive = (path: string) => {
     if (path === '/admin') return location.pathname === '/admin' || location.pathname === '/admin/';
@@ -228,7 +233,7 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 10000000) { // Increased to 10MB
+      if (file.size > 10000000) { // 10MB
         alert("Image too large. Please use a file under 10MB.");
         return;
       }
@@ -264,7 +269,7 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.fileUrl) {
-      alert("Error: No delivery source attached. Please upload a file or provide a link.");
+      alert("Error: No delivery source attached.");
       return;
     }
 
@@ -272,10 +277,9 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
     setErrorStatus(null);
 
     try {
-      // 1. Verify Session
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        throw new Error("You must be logged in via Discord/Supabase to sync live. Local staff key access is for preview only.");
+        throw new Error("You must be logged in via Discord to sync live.");
       }
 
       const productPayload = {
@@ -308,7 +312,7 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
       console.error("DB Error:", err);
       let msg = err.message;
       if (msg.includes("infinite recursion")) {
-        msg = "Supabase RLS Policy Error: Recursive check detected in your 'profiles' table. Please fix your Postgres policies or log in as a real admin user.";
+        msg = "Supabase RLS Policy Error: A recursive policy on your 'profiles' table is blocking database checks. Please update your SQL policies in the Supabase Dashboard.";
       }
       setErrorStatus(msg);
     } finally {
@@ -401,7 +405,6 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
                           value={formData.fileUrl === 'Link source' ? '' : formData.fileUrl}
                           onChange={e => setFormData({...formData, fileUrl: e.target.value, fileType: 'LINK', fileSize: 'External'})}
                         />
-                        <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest text-center">Use this for files larger than 50MB</p>
                      </div>
                    ) : (
                      <div 
