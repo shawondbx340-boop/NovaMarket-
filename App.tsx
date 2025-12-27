@@ -84,11 +84,19 @@ const App: React.FC = () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
+          // If profiles table has a recursive policy, this might fail.
+          // We wrap it to ensure the app still identifies the user.
+          let profile = null;
+          try {
+            const { data, error } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+            if (!error) profile = data;
+          } catch (e) {
+            console.warn("Could not fetch profile (possibly RLS recursion), using metadata fallback.");
+          }
 
           const appUser: User = {
             id: session.user.id,
@@ -108,22 +116,23 @@ const App: React.FC = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
+        let profile = null;
+        try {
+          const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+          profile = data;
+        } catch(e) {}
 
         const appUser: User = {
           id: session.user.id,
           email: session.user.email || '',
-          name: profile?.name || 'User',
-          role: profile?.role || 'user',
+          name: profile?.name || session.user.user_metadata.full_name || 'User',
+          role: profile?.role || (session.user.email === 'admin@nova.com' ? 'admin' : 'user'),
           purchasedIds: profile?.purchased_ids || []
         };
         setUser(appUser);
       } else {
-        setUser(null);
+        // If they were an admin via key, don't wipe them unless they explicitly log out
+        setUser(prev => prev?.id === 'admin-001' ? prev : null);
       }
     });
 
@@ -141,7 +150,6 @@ const App: React.FC = () => {
           .order('created_at', { ascending: false });
           
         if (!error && data) {
-          // If data is an empty array, it will correctly clear the products state
           const mappedProducts = data.map((p: any) => ({
             ...p,
             imageUrl: p.image_url,

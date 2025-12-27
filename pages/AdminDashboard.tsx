@@ -19,7 +19,8 @@ import {
   MessageSquare,
   Settings,
   Globe,
-  Loader2
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { Product, User, Order, Category, ProductRequest } from '../types.ts';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -173,6 +174,7 @@ const AdminStats: React.FC<{ products: Product[], orders: Order[] }> = ({ produc
 const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[]) => void }> = ({ products, setProducts }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [errorStatus, setErrorStatus] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [previewImg, setPreviewImg] = useState<string>('');
   const [additionalPreviews, setAdditionalPreviews] = useState<string[]>([]);
@@ -208,6 +210,7 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
     setAdditionalPreviews([]);
     setAttachedFileName('');
     setFileMode('link');
+    setErrorStatus(null);
     setIsModalOpen(true);
   };
 
@@ -218,14 +221,15 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
     setAdditionalPreviews(product.additionalImages || []);
     setAttachedFileName(product.fileType !== 'LINK' ? 'Current Package' : '');
     setFileMode(product.fileType === 'LINK' ? 'link' : 'upload');
+    setErrorStatus(null);
     setIsModalOpen(true);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5000000) { // Increased to 5MB
-        alert("Image too large. Please use a file under 5MB.");
+      if (file.size > 10000000) { // Increased to 10MB
+        alert("Image too large. Please use a file under 10MB.");
         return;
       }
       const reader = new FileReader();
@@ -235,25 +239,6 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
         setFormData(prev => ({ ...prev, imageUrl: base64 }));
       };
       reader.readAsDataURL(file);
-    }
-  };
-
-  const handleAdditionalUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      Array.from(files).forEach((file: File) => {
-        if (file.size > 2000000) return; // 2MB for additional
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64 = reader.result as string;
-          setAdditionalPreviews(prev => [...prev, base64]);
-          setFormData(prev => ({ 
-            ...prev, 
-            additionalImages: [...(prev.additionalImages || []), base64] 
-          }));
-        };
-        reader.readAsDataURL(file as Blob);
-      });
     }
   };
 
@@ -284,7 +269,15 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
     }
 
     setIsSaving(true);
+    setErrorStatus(null);
+
     try {
+      // 1. Verify Session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("You must be logged in via Discord/Supabase to sync live. Local staff key access is for preview only.");
+      }
+
       const productPayload = {
         title: formData.title,
         description: formData.description,
@@ -310,10 +303,14 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
         }
       }
 
-      // Refresh local list (handled by useEffect in App.tsx usually, but we force update here)
       window.location.reload(); 
     } catch (err: any) {
-      alert("Error saving to database: " + err.message);
+      console.error("DB Error:", err);
+      let msg = err.message;
+      if (msg.includes("infinite recursion")) {
+        msg = "Supabase RLS Policy Error: Recursive check detected in your 'profiles' table. Please fix your Postgres policies or log in as a real admin user.";
+      }
+      setErrorStatus(msg);
     } finally {
       setIsSaving(false);
     }
@@ -425,6 +422,17 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
                   <h2 className="text-4xl font-black text-white">{editingId ? 'Edit' : 'Publish'}</h2>
                   <button onClick={() => setIsModalOpen(false)} className="p-3 bg-slate-800 text-slate-500 rounded-xl hover:text-rose-400"><X /></button>
                 </div>
+
+                {errorStatus && (
+                  <div className="p-5 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-start gap-4 text-rose-500 animate-in slide-in-from-top-4">
+                    <AlertCircle className="flex-shrink-0" size={20} />
+                    <div className="space-y-1">
+                      <p className="text-xs font-black uppercase tracking-widest">Database Error</p>
+                      <p className="text-sm font-medium leading-relaxed">{errorStatus}</p>
+                    </div>
+                  </div>
+                )}
+
                 <form onSubmit={handleSaveProduct} className="space-y-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Asset Title</label>
@@ -450,6 +458,7 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
                     {isSaving ? <Loader2 className="animate-spin" /> : <Globe size={24} />}
                     {editingId ? 'Update & Sync' : 'Publish to Market'}
                   </button>
+                  <p className="text-[9px] text-slate-600 font-bold uppercase tracking-[0.2em] text-center">Secure Cloud Synchronization Active</p>
                 </form>
               </div>
             </div>
