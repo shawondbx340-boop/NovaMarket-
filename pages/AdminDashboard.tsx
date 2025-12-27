@@ -304,7 +304,7 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Category Node</label>
                   <select className="w-full px-6 py-4 bg-slate-800 border border-white/5 rounded-2xl font-bold text-white outline-none focus:border-indigo-500 transition-all" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value as Category})}>
-                    {(Object.values(Category) as string[]).map((cat) => (
+                    {(Object.values(Category) as string[]).map((cat: string) => (
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>
