@@ -11,7 +11,9 @@ import {
   Zap,
   Shield,
   RefreshCw,
-  ShieldCheck
+  ShieldCheck,
+  User as UserIcon,
+  ShoppingBag
 } from 'lucide-react';
 import { Product, User, Order } from './types';
 import { INITIAL_PRODUCTS } from './constants';
@@ -40,7 +42,6 @@ const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
   const fetchSessionAndProfile = useCallback(async () => {
@@ -49,7 +50,7 @@ const App: React.FC = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        // Fetch profile to get role and purchased items
+        // Fetch profile with a timestamp to bust potential cache/stale data
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('*')
@@ -68,7 +69,6 @@ const App: React.FC = () => {
           purchasedIds: profile?.purchased_ids || []
         };
         setUser(appUser);
-        console.log("Logged in as:", appUser.role);
       } else {
         setUser(null);
       }
@@ -134,11 +134,11 @@ const App: React.FC = () => {
               {user ? (
                 <div className="flex items-center gap-3">
                   {user.role === 'admin' && (
-                    <Link to="/admin" className="hidden md:flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-black text-[10px] uppercase rounded-xl">
+                    <Link to="/admin" className="hidden md:flex items-center gap-2 px-4 py-2 bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 font-black text-[10px] uppercase rounded-xl hover:bg-indigo-600 hover:text-white transition-all">
                       <ShieldCheck size={14} /> Admin
                     </Link>
                   )}
-                  <Link to="/dashboard" className="flex items-center gap-2 px-4 py-2 bg-slate-900 border border-white/5 text-white font-black text-[10px] uppercase rounded-xl">
+                  <Link to="/dashboard" className="flex items-center gap-2 px-4 py-2 bg-slate-900 border border-white/5 text-white font-black text-[10px] uppercase rounded-xl hover:bg-slate-800 transition-all">
                     <LayoutDashboard size={14} /> Dashboard
                   </Link>
                   <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-rose-500 transition-colors">
@@ -146,7 +146,7 @@ const App: React.FC = () => {
                   </button>
                 </div>
               ) : (
-                <button onClick={() => setIsAuthModalOpen(true)} className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest">
+                <button onClick={() => setIsAuthModalOpen(true)} className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-600/20">
                   Sign In
                 </button>
               )}
@@ -168,8 +168,15 @@ const App: React.FC = () => {
           </Routes>
         </main>
 
-        <footer className="bg-slate-900 border-t border-white/5 py-10 text-center">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">© 2025 NOVAMARKET DIGITAL CORP.</p>
+        <footer className="bg-slate-950 border-t border-white/5 py-12">
+          <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">© 2025 NOVAMARKET DIGITAL CORP.</p>
+            <div className="flex gap-8 text-[10px] font-black uppercase tracking-widest text-slate-600">
+               <Link to="/p/about" className="hover:text-white transition-colors">About</Link>
+               <Link to="/p/privacy" className="hover:text-white transition-colors">Privacy</Link>
+               <Link to="/p/terms" className="hover:text-white transition-colors">Terms</Link>
+            </div>
+          </div>
         </footer>
         <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} setUser={setUser} />
       </div>
