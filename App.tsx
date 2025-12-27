@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
@@ -84,16 +83,20 @@ const App: React.FC = () => {
     if (!isSupabaseConfigured) return;
 
     const fetchSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const appUser: User = {
-          id: session.user.id,
-          email: session.user.email || '',
-          name: session.user.user_metadata.full_name || session.user.email?.split('@')[0] || 'User',
-          role: session.user.email === 'admin@nova.com' ? 'admin' : 'user',
-          purchasedIds: []
-        };
-        setUser(appUser);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const appUser: User = {
+            id: session.user.id,
+            email: session.user.email || '',
+            name: session.user.user_metadata.full_name || session.user.email?.split('@')[0] || 'User',
+            role: session.user.email === 'admin@nova.com' ? 'admin' : 'user',
+            purchasedIds: []
+          };
+          setUser(appUser);
+        }
+      } catch (e) {
+        console.error("Supabase Auth Error:", e);
       }
     };
 
@@ -122,9 +125,13 @@ const App: React.FC = () => {
     if (!isSupabaseConfigured) return;
 
     const getProducts = async () => {
-      const { data, error } = await supabase.from('products').select('*');
-      if (!error && data && data.length > 0) {
-        setProducts(data);
+      try {
+        const { data, error } = await supabase.from('products').select('*');
+        if (!error && data && data.length > 0) {
+          setProducts(data);
+        }
+      } catch (e) {
+        console.error("Supabase Data Error:", e);
       }
     };
     getProducts();

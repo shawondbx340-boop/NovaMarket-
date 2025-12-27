@@ -28,7 +28,7 @@ import {
   RefreshCw,
   Database
 } from 'lucide-react';
-import { Product, User, Order, Category, ProductRequest } from '../types';
+import { Product, User, Order, Category, ProductRequest } from '../types.ts';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface AdminDashboardProps {

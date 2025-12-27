@@ -1,18 +1,13 @@
-
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@^2.39.0';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.46.1';
 
 const getEnvVar = (name: string): string => {
-  // ESM / Vite logic
+  // Try import.meta.env (Vite standard)
   if (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env[name]) {
     return (import.meta as any).env[name];
   }
-  // Node / Vercel legacy logic
+  // Try process.env (Webpack/Vercel standard)
   if (typeof process !== 'undefined' && process.env && process.env[name]) {
     return process.env[name] as string;
-  }
-  // Global window fallback for some specialized environments
-  if (typeof window !== 'undefined' && (window as any)._env_ && (window as any)._env_[name]) {
-    return (window as any)._env_[name];
   }
   return '';
 };
@@ -26,7 +21,7 @@ export const isSupabaseConfigured = Boolean(
   supabaseUrl.startsWith('https://')
 );
 
-// Fallback to avoid "supabaseUrl is required" error during bundle evaluation
+// We provide a fallback project URL to prevent SDK initialization errors if keys are missing.
 const finalUrl = isSupabaseConfigured ? supabaseUrl : 'https://placeholder-project.supabase.co';
 const finalKey = isSupabaseConfigured ? supabaseAnonKey : 'placeholder-anon-key';
 
