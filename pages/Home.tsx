@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -66,7 +65,7 @@ const Home: React.FC<HomeProps> = ({ products }) => {
         setLatestRequests(parsed.slice(0, 3));
         setRequestCount(parsed.length);
       } else {
-        setRequestCount(851);
+        setRequestCount(0); // Zero demo fallback
       }
     } catch (e) {}
   }, []);
@@ -125,9 +124,9 @@ const Home: React.FC<HomeProps> = ({ products }) => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 reveal-init">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { label: 'Resources', val: 2870 + products.length, icon: <Package />, color: 'text-purple-400' },
-            { label: 'Downloads', val: 21339 + totalDownloads, icon: <Download />, color: 'text-emerald-400' },
-            { label: 'Users', val: 2328, icon: <Users />, color: 'text-blue-400' },
+            { label: 'Resources', val: products.length, icon: <Package />, color: 'text-purple-400' },
+            { label: 'Downloads', val: totalDownloads, icon: <Download />, color: 'text-emerald-400' },
+            { label: 'Users', val: 0, icon: <Users />, color: 'text-blue-400' },
             { label: 'Requests', val: requestCount, icon: <MessageSquare />, color: 'text-pink-400' },
           ].map((stat, i) => (
             <div key={i} className="glass-card p-8 rounded-[40px] text-center space-y-4 hover:bg-slate-800/40 transition-all group">
@@ -206,7 +205,7 @@ const Home: React.FC<HomeProps> = ({ products }) => {
           </Link>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {latestResources.map((p, i) => (
+          {latestResources.length > 0 ? latestResources.map((p, i) => (
             <Link 
               key={p.id} 
               to={`/product/${p.id}`} 
@@ -233,7 +232,11 @@ const Home: React.FC<HomeProps> = ({ products }) => {
                 </div>
               </div>
             </Link>
-          ))}
+          )) : (
+            <div className="col-span-full py-20 text-center border-2 border-dashed border-white/5 rounded-[40px] text-slate-700 font-black uppercase tracking-widest">
+              Inventory currently empty
+            </div>
+          )}
         </div>
       </section>
 

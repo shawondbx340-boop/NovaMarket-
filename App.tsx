@@ -84,7 +84,6 @@ const App: React.FC = () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
-          // Fetch additional profile data (role, purchasedIds) from the database
           const { data: profile } = await supabase
             .from('profiles')
             .select('*')
@@ -141,8 +140,8 @@ const App: React.FC = () => {
           .select('*')
           .order('created_at', { ascending: false });
           
-        if (!error && data && data.length > 0) {
-          // Map snake_case from DB to camelCase for the app
+        if (!error && data) {
+          // If data is an empty array, it will correctly clear the products state
           const mappedProducts = data.map((p: any) => ({
             ...p,
             imageUrl: p.image_url,

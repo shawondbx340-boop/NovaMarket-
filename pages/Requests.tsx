@@ -10,11 +10,8 @@ const Requests: React.FC = () => {
     } catch (e) {
         console.error("Storage read error in Requests", e);
     }
-    return [
-      { id: '1', title: 'Advanced Unreal Engine 5 Landscape Shaders', description: 'Looking for a comprehensive tutorial or shader pack for realistic desert environments.', category: 'Development', votes: 142, userName: 'DevMaster', date: '2 days ago', status: 'pending' },
-      { id: '2', title: 'Cyberpunk Sound Effects Library', description: 'Need futuristic glitchy UI sounds and heavy synth transitions.', category: 'Video Assets', votes: 89, userName: 'AudioEdits', date: '1 week ago', status: 'pending' },
-      { id: '3', title: 'SaaS Figma UI Kit (B2B)', description: 'Searching for a modern, clean Dashboard UI kit focused on analytics.', category: 'Graphics', votes: 215, userName: 'DesignPro', date: '3 days ago', status: 'pending' }
-    ];
+    // Return empty array instead of demo data
+    return [];
   });
 
   useEffect(() => {
@@ -74,7 +71,7 @@ const Requests: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        {requests.map((request, i) => (
+        {requests.length > 0 ? requests.map((request, i) => (
           <div 
             key={request.id} 
             className="reveal-init bg-slate-800/40 border border-slate-800 p-8 rounded-[40px] flex flex-col md:flex-row justify-between items-start md:items-center gap-6 hover:border-indigo-500/30 transition-all group"
@@ -106,7 +103,11 @@ const Requests: React.FC = () => {
               </button>
             </div>
           </div>
-        ))}
+        )) : (
+          <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-[40px] text-slate-700 font-black uppercase tracking-widest">
+            No community inquiries found
+          </div>
+        )}
       </div>
 
       {isModalOpen && (
