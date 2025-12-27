@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, ShieldAlert, Zap, AlertCircle } from 'lucide-react';
-import { User } from '../types.ts';
-import { supabase, isSupabaseConfigured } from '../supabase.ts';
+import { User } from '../types';
+import { supabase, isSupabaseConfigured } from '../supabase';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -66,7 +65,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, setUser }) => {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl">
-      <div className="bg-slate-900 border border-white/5 w-full max-w-sm rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+      <div className="bg-slate-900 border border-white/5 w-full max-sm rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
         <div className="p-10 space-y-8">
           <div className="flex justify-between items-center">
             <h2 className="text-3xl font-black tracking-tighter text-white">
