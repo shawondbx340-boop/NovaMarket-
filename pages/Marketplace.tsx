@@ -1,8 +1,7 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Search, SlidersHorizontal, ChevronRight, Download, Star } from 'lucide-react';
-import { Product, Category } from '../types.ts';
+import { Product, Category } from '../types';
 
 interface MarketplaceProps {
   products: Product[];

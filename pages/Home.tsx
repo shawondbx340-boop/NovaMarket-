@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -17,7 +16,7 @@ import {
   Globe,
   Award
 } from 'lucide-react';
-import { Product, ProductRequest } from '../types.ts';
+import { Product, ProductRequest } from '../types';
 
 interface HomeProps {
   products: Product[];
