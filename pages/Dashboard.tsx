@@ -1,6 +1,19 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { ShoppingBag, Clock, Download, Play, ExternalLink, Package, RefreshCw, ShieldCheck } from 'lucide-react';
+import { 
+  ShoppingBag, 
+  Clock, 
+  Download, 
+  Play, 
+  ExternalLink, 
+  Package, 
+  RefreshCw, 
+  ShieldCheck,
+  Database,
+  AlertCircle,
+  ChevronDown,
+  ChevronUp
+} from 'lucide-react';
 import { User, Product, Order } from '../types';
 
 interface DashboardProps {
@@ -12,6 +25,8 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ user, products, orders, refreshProfile, isSyncing }) => {
+  const [showDebug, setShowDebug] = useState(false);
+  
   if (!user) return <Navigate to="/" replace />;
 
   const purchasedProducts = useMemo(() => {
@@ -24,7 +39,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, products, orders, refreshPr
 
   const handleDownload = (product: Product) => {
     if (!product.fileUrl || product.fileUrl === '#') {
-      alert("This item's file link is not yet available. Please try again later or contact support.");
+      alert("This item's file link is not yet available.");
       return;
     }
     const link = document.createElement('a');
@@ -41,13 +56,17 @@ const Dashboard: React.FC<DashboardProps> = ({ user, products, orders, refreshPr
         <div className="space-y-3">
           <div className="flex items-center gap-3">
             <h1 className="text-4xl font-black">Creator Dashboard</h1>
-            {user.role === 'admin' && (
-              <span className="px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-black uppercase tracking-widest rounded-lg flex items-center gap-2">
-                <ShieldCheck size={12} /> Admin Mode
+            {user.role === 'admin' ? (
+              <Link to="/admin" className="px-3 py-1 bg-indigo-500 text-white text-[10px] font-black uppercase tracking-widest rounded-lg flex items-center gap-2 hover:bg-indigo-400 transition-colors shadow-lg shadow-indigo-500/20">
+                <ShieldCheck size={12} /> Access Admin Panel
+              </Link>
+            ) : (
+              <span className="px-3 py-1 bg-slate-800 text-slate-500 text-[10px] font-black uppercase tracking-widest rounded-lg border border-white/5">
+                Standard Member
               </span>
             )}
           </div>
-          <p className="text-slate-500">Welcome back, {user.name}. Manage your premium workspace.</p>
+          <p className="text-slate-500">Welcome back, {user.name}.</p>
         </div>
         
         <button 
@@ -56,8 +75,52 @@ const Dashboard: React.FC<DashboardProps> = ({ user, products, orders, refreshPr
           className="flex items-center gap-2 px-6 py-3 bg-slate-900 border border-slate-800 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-400 hover:text-indigo-400 transition-all active:scale-95 disabled:opacity-50"
         >
           <RefreshCw size={14} className={isSyncing ? "animate-spin" : ""} />
-          {isSyncing ? 'Syncing...' : 'Refresh Profile'}
+          {isSyncing ? 'Syncing...' : 'Sync Database Role'}
         </button>
+      </div>
+
+      {/* Troubleshooting Section */}
+      <div className="bg-slate-900/50 border border-slate-800 rounded-[32px] overflow-hidden">
+        <button 
+          onClick={() => setShowDebug(!showDebug)}
+          className="w-full px-8 py-4 flex items-center justify-between text-slate-400 hover:text-white transition-colors"
+        >
+          <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+            <Database size={14} /> System Diagnostics
+          </div>
+          {showDebug ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </button>
+        
+        {showDebug && (
+          <div className="px-8 pb-8 space-y-4 animate-in slide-in-from-top-2">
+            <div className="p-6 bg-slate-950 rounded-2xl border border-white/5 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest">App Detected Role</p>
+                  <p className={`text-sm font-bold ${user.role === 'admin' ? 'text-indigo-400' : 'text-amber-500'}`}>
+                    {user.role.toUpperCase()}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest">User ID</p>
+                  <p className="text-[10px] font-mono text-slate-400 truncate">{user.id}</p>
+                </div>
+              </div>
+              
+              {user.role !== 'admin' && (
+                <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-start gap-3">
+                  <AlertCircle size={18} className="text-amber-500 flex-shrink-0 mt-0.5" />
+                  <div className="text-xs text-amber-200/70 leading-relaxed">
+                    <p className="font-black text-amber-500 uppercase tracking-widest mb-1">Role Sync Warning</p>
+                    If you changed your role to "admin" in Supabase but it still says "USER" here, 
+                    your database is likely returning an <span className="text-white font-bold">RLS Recursion Error</span>. 
+                    Please run the SQL fix provided in the instructions to unlock your profile.
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
