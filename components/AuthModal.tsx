@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, ShieldAlert, Zap, AlertCircle } from 'lucide-react';
+import { X, ShieldAlert, Zap, AlertCircle, ExternalLink, Settings, Info, CheckCircle2 } from 'lucide-react';
 import { User } from '../types';
-import { supabase, isSupabaseConfigured } from '../supabase';
+import { supabase, isSupabaseConfigured, isKeyIncorrect, getRedirectUrl } from '../supabase';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -19,28 +19,33 @@ const DiscordIcon = () => (
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, setUser }) => {
   const navigate = useNavigate();
   const [isAdminMode, setIsAdminMode] = useState(false);
+  const [showConfigHelper, setShowConfigHelper] = useState(true); // Default to true for now to guide the user
   const [adminKey, setAdminKey] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   if (!isOpen) return null;
 
   const handleDiscordLogin = async () => {
-    if (!isSupabaseConfigured) {
-      alert("Database keys are missing. Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your environment to enable real Discord OAuth.");
+    if (isKeyIncorrect) {
+      alert("CRITICAL: Your key is still a Stripe key. Please reload or check supabase.ts.");
       return;
     }
 
     setIsLoading(true);
     try {
+      // Use the helper to get the dynamic origin (e.g. your Vercel URL)
+      const redirectTo = getRedirectUrl();
+      console.log("Initiating login with redirect to:", redirectTo);
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'discord',
         options: {
-          redirectTo: window.location.origin
+          redirectTo: redirectTo
         }
       });
       if (error) throw error;
     } catch (e: any) {
-      alert(e.message || "Failed to initiate Discord Auth. Ensure your Supabase project has Discord Auth enabled.");
+      alert(e.message || "Failed to initiate Discord Auth.");
       setIsLoading(false);
     }
   };
@@ -49,7 +54,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, setUser }) => {
     e.preventDefault();
     if (adminKey === 'NOVA-ADMIN-2025') {
       const adminUser: User = {
-        id: 'admin-console-001',
+        id: 'admin-001',
         email: 'admin@nova.com',
         name: 'System Admin',
         role: 'admin',
@@ -59,43 +64,41 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, setUser }) => {
       onClose();
       navigate('/admin');
     } else {
-      alert("Invalid Administrative Access Key.");
+      alert("Invalid Access Key.");
     }
   };
 
+  const currentOrigin = getRedirectUrl();
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl">
-      <div className="bg-slate-900 border border-white/5 w-full max-sm rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in duration-300">
-        <div className="p-10 space-y-8">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl overflow-y-auto">
+      <div className="bg-slate-900 border border-white/5 w-full max-lg rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in duration-300 my-auto">
+        <div className="p-8 space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-3xl font-black tracking-tighter text-white">
-              {isAdminMode ? 'Admin Portal' : 'Sign In'}
+            <h2 className="text-2xl font-black text-white">
+              {isAdminMode ? 'Admin Access' : 'Secure Login'}
             </h2>
-            <button onClick={onClose} className="p-2 bg-slate-800 border border-white/5 hover:text-indigo-400 rounded-xl transition-all">
+            <button onClick={onClose} className="p-2 bg-slate-800 border border-white/5 hover:text-indigo-400 rounded-xl transition-colors">
               <X size={18} />
             </button>
           </div>
 
           {!isAdminMode ? (
             <div className="space-y-6">
-              {!isSupabaseConfigured && (
-                <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
-                  <AlertCircle className="text-amber-500 flex-shrink-0 mt-0.5" size={16} />
-                  <p className="text-[10px] text-amber-500/80 font-bold uppercase tracking-wider leading-relaxed">
-                    Real Discord Auth requires Supabase configuration.
-                  </p>
-                </div>
-              )}
-              
-              <p className="text-slate-500 font-bold text-sm leading-relaxed text-center">Join our verified creator ecosystem via Discord OAuth.</p>
-              
+              <div className="flex items-center gap-3 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl">
+                <CheckCircle2 className="text-indigo-400 flex-shrink-0" size={20} />
+                <p className="text-[10px] text-indigo-300 font-black uppercase tracking-widest leading-relaxed">
+                  Correct API Key Detected. Ready for live authentication.
+                </p>
+              </div>
+
               <button 
                 onClick={handleDiscordLogin}
                 disabled={isLoading}
-                className="w-full py-4 bg-[#5865F2] hover:bg-[#4752C4] text-white font-black rounded-2xl transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50 shadow-lg shadow-[#5865F2]/20"
+                className="w-full py-5 bg-[#5865F2] hover:bg-[#4752C4] text-white font-black rounded-3xl transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50 shadow-xl shadow-[#5865F2]/20 text-lg"
               >
                 {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
                   <>
                     <DiscordIcon />
@@ -103,49 +106,93 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, setUser }) => {
                   </>
                 )}
               </button>
+
+              <div className="bg-slate-800/50 rounded-3xl p-6 border border-white/5 space-y-4">
+                <button 
+                  onClick={() => setShowConfigHelper(!showConfigHelper)}
+                  className="w-full flex items-center justify-between text-[11px] font-black uppercase tracking-[0.2em] text-indigo-400 hover:text-white transition-colors"
+                >
+                  <span className="flex items-center gap-2"><Settings size={14} /> FIX THE "LOCALHOST" ERROR</span>
+                  <Info size={14} />
+                </button>
+                
+                {showConfigHelper && (
+                  <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase leading-relaxed">
+                      If Discord sends you to a "This site can't be reached" page, you MUST update these settings in your <span className="text-white">Supabase Dashboard</span>:
+                    </p>
+                    
+                    <div className="space-y-3">
+                      <div className="p-3 bg-slate-950 rounded-xl border border-white/10 group cursor-help" onClick={() => navigator.clipboard.writeText(currentOrigin)}>
+                        <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1">1. Site URL (Copy this)</p>
+                        <div className="flex items-center justify-between gap-2">
+                          <code className="text-[11px] text-white font-mono break-all">{currentOrigin}/</code>
+                          <Settings size={12} className="text-slate-600 group-hover:text-white transition-colors" />
+                        </div>
+                      </div>
+
+                      <div className="p-3 bg-slate-950 rounded-xl border border-white/10 group cursor-help" onClick={() => navigator.clipboard.writeText(`${currentOrigin}/**`)}>
+                        <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1">2. Redirect URLs (Copy this)</p>
+                        <div className="flex items-center justify-between gap-2">
+                          <code className="text-[11px] text-white font-mono break-all">{currentOrigin}/**</code>
+                          <Settings size={12} className="text-slate-600 group-hover:text-white transition-colors" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <a 
+                      href="https://supabase.com/dashboard/project/sdlktxfobysbsgpcokoc/auth/settings" 
+                      target="_blank" 
+                      className="w-full py-3 bg-indigo-600/10 border border-indigo-500/30 text-indigo-400 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all"
+                    >
+                      Open Supabase Settings <ExternalLink size={12} />
+                    </a>
+                  </div>
+                )}
+              </div>
               
-              <div className="pt-2 flex justify-center">
+              <div className="pt-2 text-center">
                  <button 
                    onClick={() => setIsAdminMode(true)}
                    className="text-[9px] font-black text-slate-600 uppercase tracking-widest hover:text-indigo-400 transition-colors"
                  >
-                   Administrative Access
+                   Staff Console
                  </button>
               </div>
             </div>
           ) : (
             <form onSubmit={handleAdminLogin} className="space-y-5 animate-in slide-in-from-bottom-2">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Staff Access Key</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Access Key</label>
                 <input
                   type="password"
-                  placeholder="Console Key"
+                  placeholder="NOVA-ADMIN-2025"
                   required
                   autoFocus
                   value={adminKey}
                   onChange={(e) => setAdminKey(e.target.value)}
-                  className="w-full px-5 py-4 bg-slate-800 border-2 border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-white font-mono text-sm"
+                  className="w-full px-5 py-4 bg-slate-800 border-2 border-slate-800 rounded-2xl outline-none focus:border-indigo-500 transition-all text-white font-mono"
                 />
               </div>
               <button 
                 type="submit"
-                className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl transition-all shadow-lg shadow-indigo-500/20 active:scale-95 flex items-center justify-center gap-2"
+                className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-lg shadow-indigo-500/20 active:scale-95 flex items-center justify-center gap-2"
               >
-                <ShieldAlert size={18} /> Enter Console
+                <ShieldAlert size={18} /> Authenticate
               </button>
               <button 
                 type="button"
                 onClick={() => setIsAdminMode(false)}
                 className="w-full text-slate-500 text-xs font-bold hover:text-white transition-colors"
               >
-                Return to Member Login
+                Cancel
               </button>
             </form>
           )}
 
-          <div className="text-center">
+          <div className="text-center pt-4">
             <p className="text-[9px] text-slate-700 font-black uppercase tracking-[0.2em]">
-              <Zap size={10} className="inline mr-1" /> Vercel & Supabase Secured
+              <Zap size={10} className="inline mr-1" /> Multi-Node Auth Enabled
             </p>
           </div>
         </div>

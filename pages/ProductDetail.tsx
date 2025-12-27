@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
@@ -18,7 +17,8 @@ import {
   Copy,
   Check
 } from 'lucide-react';
-import { Product, User, Order } from '../types.ts';
+import { Product, User, Order } from '../types';
+import { supabase, isSupabaseConfigured } from '../supabase';
 
 interface ProductDetailProps {
   products: Product[];
@@ -44,13 +44,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ products, user, orders, s
     }
   }, [product]);
 
-  const relatedProducts = useMemo(() => {
-    if (!product) return [];
-    return products
-      .filter(p => p.category === product.category && p.id !== product.id)
-      .slice(0, 4);
-  }, [products, product]);
-
   useEffect(() => {
     if (showShareToast) {
       const timer = setTimeout(() => setShowShareToast(false), 2000);
@@ -69,34 +62,51 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ products, user, orders, s
   const showBuyButton = !product.isFree && !isPurchased;
   const showDownloadButton = product.isFree || isPurchased;
 
-  const handlePurchase = () => {
+  const handlePurchase = async () => {
     if (!user) {
       alert("Please login to purchase products.");
       return;
     }
 
     setIsPurchasing(true);
-    setTimeout(() => {
-      const newOrder: Order = {
-        id: Math.random().toString(36).substr(2, 9),
-        userId: user.id,
-        productId: product.id,
-        amount: product.price,
-        date: new Date().toISOString(),
-        status: 'completed'
-      };
+    
+    try {
+      if (isSupabaseConfigured) {
+        // 1. Create the order
+        const { error: orderError } = await supabase.from('orders').insert({
+          user_id: user.id,
+          product_id: product.id,
+          amount: product.price,
+          status: 'completed'
+        });
 
-      setOrders([...orders, newOrder]);
+        if (orderError) throw orderError;
+
+        // 2. Update user profile purchased_ids
+        const newPurchasedIds = [...user.purchasedIds, product.id];
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ purchased_ids: newPurchasedIds })
+          .eq('id', user.id);
+
+        if (profileError) throw profileError;
+
+        // 3. Increment sales count on product
+        await supabase.rpc('increment_sales_count', { row_id: product.id });
+
+        setUser({ ...user, purchasedIds: newPurchasedIds });
+      } else {
+        // Simulation fallback
+        await new Promise(r => setTimeout(r, 1500));
+        setUser({ ...user, purchasedIds: [...user.purchasedIds, product.id] });
+      }
       
-      const updatedUser = {
-        ...user,
-        purchasedIds: [...user.purchasedIds, product.id]
-      };
-      setUser(updatedUser);
-      
-      setIsPurchasing(false);
       setShowSuccess(true);
-    }, 1500);
+    } catch (e: any) {
+      alert("Purchase failed: " + e.message);
+    } finally {
+      setIsPurchasing(false);
+    }
   };
 
   const handleDownload = () => {
@@ -104,7 +114,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ products, user, orders, s
       alert("Error: Download link is not configured for this item.");
       return;
     }
-
     const link = document.createElement('a');
     link.href = product.fileUrl; 
     link.download = `${product.title.replace(/\s+/g, '_')}_NovaMarket.${product.fileType.toLowerCase()}`;
@@ -204,6 +213,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ products, user, orders, s
 
               {showSuccess ? (
                 <div className="p-8 bg-green-950/20 border border-green-800/50 rounded-[32px] flex flex-col items-center gap-6 animate-in zoom-in duration-500">
+                  <div className="w-20 h-20 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center border border-emerald-500/30">
+                    <CheckCircle2 size={40} />
+                  </div>
+                  <h3 className="text-xl font-bold">Successfully Added to Library!</h3>
                   <button 
                     onClick={handleDownload}
                     className="w-full py-5 bg-green-600 hover:bg-green-700 text-white font-black text-lg rounded-2xl transition-all shadow-xl shadow-green-500/30 flex items-center justify-center gap-3 active:scale-95"
@@ -235,6 +248,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ products, user, orders, s
                       >
                         <Download size={28} /> Download Now
                       </button>
+                      {product.category === 'Courses' && (
+                        <Link to={`/course/${product.id}`} className="w-full py-6 bg-slate-800 border border-slate-700 hover:border-indigo-500/50 text-white font-black text-xl rounded-2xl transition-all flex items-center justify-center gap-4 active:scale-95">
+                          <Play size={28} className="fill-current" /> Start Course
+                        </Link>
+                      )}
                     </div>
                   )}
                 </div>

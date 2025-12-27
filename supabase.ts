@@ -1,38 +1,43 @@
 import { createClient } from '@supabase/supabase-js';
 
 /**
- * For Vite applications, environment variables must be prefixed with VITE_.
- * In development, these are loaded from .env files.
- * In production (Vercel/Netlify), these are pulled from the platform's Environment Variables settings.
+ * Supabase Client Configuration
  */
 
-// Helper to get environment variables across different contexts
 const getEnv = (key: string): string => {
   const meta = import.meta as any;
-  if (meta.env && meta.env[key]) {
-    return meta.env[key];
-  }
-  
-  if (typeof process !== 'undefined' && process.env) {
-    return (process.env as Record<string, any>)[key] || '';
-  }
+  if (meta.env && meta.env[key]) return meta.env[key];
+  if (typeof process !== 'undefined' && process.env) return (process.env as any)[key] || '';
   return '';
 };
 
-// User provided values as fallbacks if environment variables are missing
+// The Project URL remains the same as previously seen
 const DEFAULT_URL = 'https://sdlktxfobysbsgpcokoc.supabase.co';
-const DEFAULT_KEY = 'sb_publishable_C2i2AOdT_TTAKe345on2LQ_LLyg86aW'; // Note: If this is actually a Stripe key, Supabase requests will fail with 401.
+
+// UPDATED: Correct Supabase Anon Key provided by user
+const DEFAULT_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkbGt0eGZvYnlzYnNncGNva29jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3NDA1NTAsImV4cCI6MjA4MjMxNjU1MH0.qdX3jaUrEFnQEZPP8zSH8JOtjXd01_gkz4389nmjpw0'; 
 
 const supabaseUrl = getEnv('VITE_SUPABASE_URL') || DEFAULT_URL;
 const supabaseAnonKey = getEnv('VITE_SUPABASE_ANON_KEY') || DEFAULT_KEY;
 
-// Verification check: Ensuring keys are present and the URL is a valid format
+// Check if the key is the incorrect Stripe format (legacy check, but good to keep)
+export const isKeyIncorrect = supabaseAnonKey.startsWith('sb_') || supabaseAnonKey.startsWith('pk_');
+
 export const isSupabaseConfigured = Boolean(
   supabaseUrl && 
   supabaseAnonKey && 
   supabaseUrl.startsWith('https://') &&
-  !supabaseUrl.includes('placeholder-project')
+  !isKeyIncorrect
 );
 
-// Initialize Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+/**
+ * Helper to get the base redirect URL.
+ * Ensure this matches what is entered in Supabase Dashboard -> Authentication -> URL Configuration
+ */
+export const getRedirectUrl = () => {
+  // If we are on Vercel, use the current origin.
+  // We remove trailing slashes to stay consistent.
+  return window.location.origin.replace(/\/$/, '');
+};

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
@@ -35,7 +34,6 @@ const ScrollToTop = () => {
   return null;
 };
 
-// Component for periodic purchase notifications to simulate activity
 const PurchaseNotification = ({ products }: { products: Product[] }) => {
   const [notification, setNotification] = useState<{ user: string, product: string } | null>(null);
   const names = ['Liam', 'Emma', 'Noah', 'Olivia', 'James', 'Sophia', 'Ethan', 'Isabella', 'Mia', 'Lucas'];
@@ -82,16 +80,23 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!isSupabaseConfigured) return;
 
-    const fetchSession = async () => {
+    const fetchSessionAndProfile = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
+          // Fetch additional profile data (role, purchasedIds) from the database
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
           const appUser: User = {
             id: session.user.id,
             email: session.user.email || '',
-            name: session.user.user_metadata.full_name || session.user.email?.split('@')[0] || 'User',
-            role: session.user.email === 'admin@nova.com' ? 'admin' : 'user',
-            purchasedIds: []
+            name: profile?.name || session.user.user_metadata.full_name || 'User',
+            role: profile?.role || (session.user.email === 'admin@nova.com' ? 'admin' : 'user'),
+            purchasedIds: profile?.purchased_ids || []
           };
           setUser(appUser);
         }
@@ -100,16 +105,22 @@ const App: React.FC = () => {
       }
     };
 
-    fetchSession();
+    fetchSessionAndProfile();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
         const appUser: User = {
           id: session.user.id,
           email: session.user.email || '',
-          name: session.user.user_metadata.full_name || 'User',
-          role: session.user.email === 'admin@nova.com' ? 'admin' : 'user',
-          purchasedIds: []
+          name: profile?.name || 'User',
+          role: profile?.role || 'user',
+          purchasedIds: profile?.purchased_ids || []
         };
         setUser(appUser);
       } else {
@@ -125,9 +136,25 @@ const App: React.FC = () => {
 
     const getProducts = async () => {
       try {
-        const { data, error } = await supabase.from('products').select('*');
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false });
+          
         if (!error && data && data.length > 0) {
-          setProducts(data);
+          // Map snake_case from DB to camelCase for the app
+          const mappedProducts = data.map((p: any) => ({
+            ...p,
+            imageUrl: p.image_url,
+            additionalImages: p.additional_images,
+            fileUrl: p.file_url,
+            fileType: p.file_type,
+            fileSize: p.file_size,
+            isFree: p.is_free,
+            salesCount: p.sales_count,
+            createdAt: p.created_at
+          }));
+          setProducts(mappedProducts);
         }
       } catch (e) {
         console.error("Supabase Data Error:", e);
