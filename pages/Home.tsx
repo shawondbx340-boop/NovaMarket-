@@ -65,7 +65,7 @@ const Home: React.FC<HomeProps> = ({ products }) => {
         setLatestRequests(parsed.slice(0, 3));
         setRequestCount(parsed.length);
       } else {
-        setRequestCount(0); 
+        setRequestCount(0); // Zero demo fallback
       }
     } catch (e) {}
   }, []);
@@ -160,17 +160,11 @@ const Home: React.FC<HomeProps> = ({ products }) => {
             <Link 
               key={p.id} 
               to={`/product/${p.id}`} 
-              className="reveal-init group glass-card rounded-[40px] overflow-hidden hover:border-indigo-500/50 transition-all relative" 
+              className="reveal-init group glass-card rounded-[40px] overflow-hidden hover:border-indigo-500/50 transition-all" 
               style={{ transitionDelay: `${i * 100}ms` }}
             >
               <div className="aspect-[4/3] overflow-hidden relative">
                 <img src={p.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                {/* Dynamic Corner Badge */}
-                {p.badgeText && (
-                  <div className={`absolute top-4 left-4 px-3 py-1 rounded-xl text-[8px] font-black uppercase tracking-widest border shadow-xl backdrop-blur-md z-10 ${p.isFree ? 'bg-emerald-500/80 border-emerald-400 text-white' : 'bg-indigo-600/80 border-indigo-400 text-white'}`}>
-                    {p.badgeText}
-                  </div>
-                )}
               </div>
               <div className="p-8 space-y-4">
                 <div className="flex justify-between items-center">

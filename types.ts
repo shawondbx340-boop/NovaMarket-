@@ -34,7 +34,6 @@ export interface Product {
   fileType: string;
   fileSize: string;
   isFree: boolean;
-  badgeText?: string; // New custom tag field
   modules?: CourseModule[]; // Only for Courses
   rating: number;
   salesCount: number; // Also used as download count

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
@@ -51,6 +50,7 @@ const App: React.FC = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
+        // Fetch profile with a timestamp to bust potential cache/stale data
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('*')
@@ -100,7 +100,6 @@ const App: React.FC = () => {
           fileType: p.file_type,
           fileSize: p.file_size,
           isFree: p.is_free,
-          badgeText: p.badge_text, // Map new field
           salesCount: p.sales_count,
           createdAt: p.created_at
         })));

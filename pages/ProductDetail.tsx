@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
@@ -73,6 +72,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ products, user, orders, s
     
     try {
       if (isSupabaseConfigured) {
+        // 1. Create the order
         const { error: orderError } = await supabase.from('orders').insert({
           user_id: user.id,
           product_id: product.id,
@@ -82,6 +82,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ products, user, orders, s
 
         if (orderError) throw orderError;
 
+        // 2. Update user profile purchased_ids
         const newPurchasedIds = [...user.purchasedIds, product.id];
         const { error: profileError } = await supabase
           .from('profiles')
@@ -90,10 +91,12 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ products, user, orders, s
 
         if (profileError) throw profileError;
 
+        // 3. Increment sales count on product
         await supabase.rpc('increment_sales_count', { row_id: product.id });
 
         setUser({ ...user, purchasedIds: newPurchasedIds });
       } else {
+        // Simulation fallback
         await new Promise(r => setTimeout(r, 1500));
         setUser({ ...user, purchasedIds: [...user.purchasedIds, product.id] });
       }
@@ -108,7 +111,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ products, user, orders, s
 
   const handleDownload = () => {
     if (!product.fileUrl || product.fileUrl === '#') {
-      alert("Error: Download link is not configured.");
+      alert("Error: Download link is not configured for this item.");
       return;
     }
     const link = document.createElement('a');
@@ -162,13 +165,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ products, user, orders, s
                 alt={product.title} 
                 className="w-full h-full object-cover transition-all duration-700"
               />
-              {/* Dynamic Badge */}
-              {product.badgeText && (
-                <div className={`absolute top-6 left-6 px-5 py-2 rounded-2xl text-xs font-black uppercase tracking-widest border shadow-2xl backdrop-blur-md z-20 ${product.isFree ? 'bg-emerald-500/80 border-emerald-400 text-white' : 'bg-indigo-600/80 border-indigo-400 text-white'}`}>
-                  {product.badgeText}
-                </div>
-              )}
-              <div className="absolute bottom-6 left-6 px-5 py-2 bg-slate-900/90 backdrop-blur-md rounded-2xl text-[10px] font-black uppercase tracking-widest border border-slate-700 z-10">
+              <div className={`absolute top-6 right-6 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border shadow-2xl backdrop-blur-md z-20 ${product.isFree ? 'bg-emerald-500/80 border-emerald-400 text-white' : 'bg-indigo-600/80 border-indigo-400 text-white'}`}>
+                {product.isFree ? 'FREE' : 'PAID'}
+              </div>
+              <div className="absolute top-6 left-6 px-5 py-2 bg-slate-900/90 backdrop-blur-md rounded-2xl text-xs font-black uppercase tracking-widest border border-slate-700 z-10">
                 {product.category}
               </div>
             </div>

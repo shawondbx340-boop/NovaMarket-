@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { Navigate, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
@@ -22,8 +21,7 @@ import {
   Globe,
   Loader2,
   AlertCircle,
-  ShieldAlert,
-  Tag
+  ShieldAlert
 } from 'lucide-react';
 import { Product, User, Order, Category, ProductRequest } from '../types.ts';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -39,6 +37,7 @@ interface AdminDashboardProps {
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, products, setProducts, orders }) => {
   const location = useLocation();
   
+  // Strictly enforce admin role from the database
   if (!user || user.role !== 'admin') {
     return <Navigate to="/dashboard" replace />;
   }
@@ -195,7 +194,6 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
     price: 0,
     category: Category.GRAPHICS,
     isFree: false,
-    badgeText: '', // Initialize new field
     fileType: 'LINK',
     fileSize: '0 MB',
     imageUrl: '',
@@ -286,7 +284,6 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
         file_type: formData.fileType,
         file_size: formData.fileSize,
         is_free: formData.isFree,
-        badge_text: formData.badgeText, // Include new field
         rating: formData.rating || 5.0,
         sales_count: formData.salesCount || 0
       };
@@ -301,7 +298,7 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
         
         if (res.error) {
           if (res.error.code === '42501') {
-             throw new Error("Permission Denied: Your database RLS policies are blocking this action.");
+             throw new Error("Permission Denied: Your database RLS policies are blocking this action. Please ensure your 'profiles' table has your role set to 'admin'.");
           }
           throw res.error;
         }
@@ -321,7 +318,7 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
       if (isSupabaseConfigured) {
         const { error } = await supabase.from('products').delete().eq('id', id);
         if (error) {
-           alert("Failed to delete.");
+           alert("Failed to delete. Check console for details.");
            console.error(error);
         } else {
            window.location.reload();
@@ -442,47 +439,22 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Marketplace Title</label>
                     <input required className="w-full px-6 py-5 bg-slate-800/40 border border-white/5 rounded-3xl font-black outline-none focus:border-indigo-500" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
                   </div>
-                  
-                  {/* Enhanced Pricing & Tag Section */}
-                  <div className="p-6 bg-slate-950 border border-white/5 rounded-[32px] space-y-6">
-                    <div className="flex justify-between items-center">
-                       <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2"><Tag size={12}/> Marketing & Pricing</label>
-                       <div className="flex items-center gap-3">
-                         <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{formData.isFree ? 'Free Access' : 'Paid Asset'}</span>
-                         <button 
-                           type="button"
-                           onClick={() => setFormData({...formData, isFree: !formData.isFree, price: !formData.isFree ? 0 : formData.price})}
-                           className={`w-12 h-6 rounded-full relative transition-all ${formData.isFree ? 'bg-emerald-500' : 'bg-slate-700'}`}
-                         >
-                           <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formData.isFree ? 'right-1' : 'left-1'}`} />
-                         </button>
-                       </div>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Resource Group</label>
+                      <select className="w-full px-6 py-5 bg-slate-800/40 border border-white/5 rounded-3xl font-black outline-none" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value as Category})}>
+                        {Object.values(Category).map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                      </select>
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Badge / Tag (e.g. NEW)</label>
-                        <input placeholder="NEW, HOT, 50% OFF" className="w-full px-6 py-4 bg-slate-800/40 border border-white/5 rounded-2xl font-black outline-none focus:border-indigo-500" value={formData.badgeText} onChange={e => setFormData({...formData, badgeText: e.target.value})} />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Price ($)</label>
-                        <input disabled={formData.isFree} type="number" step="0.01" className="w-full px-6 py-4 bg-slate-800/40 border border-white/5 rounded-2xl font-black outline-none disabled:opacity-30" value={formData.price} onChange={e => setFormData({...formData, price: parseFloat(e.target.value) || 0})} />
-                      </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Valuation ($)</label>
+                      <input type="number" step="0.01" className="w-full px-6 py-5 bg-slate-800/40 border border-white/5 rounded-3xl font-black outline-none" value={formData.price} onChange={e => setFormData({...formData, price: parseFloat(e.target.value) || 0, isFree: parseFloat(e.target.value) === 0})} />
                     </div>
                   </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Resource Group</label>
-                    <select className="w-full px-6 py-5 bg-slate-800/40 border border-white/5 rounded-3xl font-black outline-none" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value as Category})}>
-                      {Object.values(Category).map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                    </select>
-                  </div>
-
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Product Narrative</label>
                     <textarea rows={4} className="w-full px-6 py-5 bg-slate-800/40 border border-white/5 rounded-3xl font-bold resize-none outline-none focus:border-indigo-500" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
                   </div>
-                  
                   <button type="submit" disabled={isSaving} className="w-full py-6 bg-indigo-600 text-white font-black text-xl rounded-[32px] shadow-2xl shadow-indigo-600/20 hover:bg-indigo-500 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3 ring-1 ring-white/10">
                     {isSaving ? <Loader2 className="animate-spin" /> : <Globe size={24} />}
                     {editingId ? 'Update & Deploy' : 'Initialize & Deploy'}
