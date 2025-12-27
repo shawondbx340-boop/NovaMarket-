@@ -11,25 +11,19 @@ import {
   DollarSign, 
   Users, 
   ShoppingBag,
-  FileText,
   Image as ImageIcon,
-  MoreVertical,
   Search,
-  Filter,
   CheckCircle,
-  AlertCircle,
+  Database,
   Link as LinkIcon,
-  MousePointerClick,
-  TrendingUp,
-  ChevronDown,
   MessageSquare,
-  ThumbsUp,
   Settings,
-  RefreshCw,
-  Database
+  Globe,
+  Loader2
 } from 'lucide-react';
 import { Product, User, Order, Category, ProductRequest } from '../types.ts';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { supabase, isSupabaseConfigured } from '../supabase';
 
 interface AdminDashboardProps {
   user: User | null;
@@ -89,7 +83,7 @@ const AdminStats: React.FC<{ products: Product[], orders: Order[] }> = ({ produc
   const totalRevenue = orders.reduce((sum, o) => sum + o.amount, 0);
   
   const handleClearStorage = () => {
-    if (confirm("WARNING: This will clear your custom product inventory and user requests to free up storage space. Continue?")) {
+    if (confirm("WARNING: This will clear your custom product inventory and user requests. Continue?")) {
       localStorage.removeItem('nova_products');
       localStorage.removeItem('nova_requests');
       localStorage.removeItem('nova_orders');
@@ -98,13 +92,13 @@ const AdminStats: React.FC<{ products: Product[], orders: Order[] }> = ({ produc
   };
 
   const chartData = [
-    { name: 'Mon', revenue: 1200, views: 400 },
-    { name: 'Tue', revenue: 1900, views: 550 },
-    { name: 'Wed', revenue: 1500, views: 480 },
-    { name: 'Thu', revenue: 2400, views: 700 },
-    { name: 'Fri', revenue: 3000, views: 900 },
-    { name: 'Sat', revenue: 4200, views: 1200 },
-    { name: 'Sun', revenue: 3800, views: 1100 },
+    { name: 'Mon', revenue: 1200 },
+    { name: 'Tue', revenue: 1900 },
+    { name: 'Wed', revenue: 1500 },
+    { name: 'Thu', revenue: 2400 },
+    { name: 'Fri', revenue: 3000 },
+    { name: 'Sat', revenue: 4200 },
+    { name: 'Sun', revenue: 3800 },
   ];
 
   return (
@@ -119,8 +113,7 @@ const AdminStats: React.FC<{ products: Product[], orders: Order[] }> = ({ produc
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
         {[
           { label: 'Total Sales', value: `$${totalRevenue.toFixed(2)}`, delta: '+15.2%', icon: <DollarSign />, color: 'text-emerald-400' },
-          { label: 'Avg. Conv Rate', value: '4.82%', delta: '+0.5%', icon: <MousePointerClick />, color: 'text-indigo-400' },
-          { label: 'Active Items', value: String(products.length), delta: '+4', icon: <ShoppingBag />, color: 'text-indigo-400' },
+          { label: 'Market Items', value: String(products.length), delta: '+4', icon: <ShoppingBag />, color: 'text-indigo-400' },
           { label: 'Platform Users', value: '8,241', delta: '+12%', icon: <Users />, color: 'text-purple-400' },
         ].map((stat, i) => (
           <div key={i} className="bg-slate-900 border border-slate-800 p-8 rounded-[40px] space-y-6 hover:border-indigo-500/30 transition-all group">
@@ -140,9 +133,7 @@ const AdminStats: React.FC<{ products: Product[], orders: Order[] }> = ({ produc
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 bg-slate-900 border border-slate-800 p-6 md:p-10 rounded-[48px] space-y-8 overflow-hidden">
-          <div className="flex justify-between items-center">
-            <h3 className="text-xl md:text-2xl font-black">Conversion & Traffic</h3>
-          </div>
+          <h3 className="text-xl md:text-2xl font-black">Performance Chart</h3>
           <div className="h-[300px] md:h-[400px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
@@ -155,9 +146,7 @@ const AdminStats: React.FC<{ products: Product[], orders: Order[] }> = ({ produc
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 11, fontWeight: 'bold'}} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 11, fontWeight: 'bold'}} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#0f172a', borderRadius: '24px', border: '1px solid #334155', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.5)' }}
-                />
+                <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderRadius: '24px', border: '1px solid #334155' }} />
                 <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={5} fillOpacity={1} fill="url(#colorRev)" />
               </AreaChart>
             </ResponsiveContainer>
@@ -166,23 +155,15 @@ const AdminStats: React.FC<{ products: Product[], orders: Order[] }> = ({ produc
 
         <div className="bg-slate-900 border border-slate-800 p-8 rounded-[48px] space-y-8 flex flex-col justify-between">
            <div className="space-y-6">
-              <div className="w-16 h-16 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-500">
-                <Settings size={32} />
-              </div>
+              <div className="w-16 h-16 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-500"><Settings size={32} /></div>
               <div className="space-y-2">
-                <h3 className="text-2xl font-black">System Health</h3>
-                <p className="text-slate-500 text-sm font-medium leading-relaxed">Manage your browser storage quota. If you hit storage limits, purge the cache to recover.</p>
+                <h3 className="text-2xl font-black">Management</h3>
+                <p className="text-slate-500 text-sm font-medium leading-relaxed">If local state becomes out of sync with your Supabase database, purge local storage.</p>
               </div>
            </div>
-           
-           <div className="space-y-4">
-              <button 
-                onClick={handleClearStorage}
-                className="w-full py-5 bg-slate-800 border border-slate-700 hover:border-rose-500/50 hover:bg-rose-500/10 hover:text-rose-500 rounded-3xl font-black text-sm flex items-center justify-center gap-3 transition-all"
-              >
-                <Database size={18} /> Purge App Storage
-              </button>
-           </div>
+           <button onClick={handleClearStorage} className="w-full py-5 bg-slate-800 border border-slate-700 hover:text-rose-500 rounded-3xl font-black text-sm flex items-center justify-center gap-3 transition-all">
+             <Database size={18} /> Reset Application Cache
+           </button>
         </div>
       </div>
     </div>
@@ -191,14 +172,12 @@ const AdminStats: React.FC<{ products: Product[], orders: Order[] }> = ({ produc
 
 const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[]) => void }> = ({ products, setProducts }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  
   const [previewImg, setPreviewImg] = useState<string>('');
   const [additionalPreviews, setAdditionalPreviews] = useState<string[]>([]);
   const [attachedFileName, setAttachedFileName] = useState<string>('');
-  const [fileMode, setFileMode] = useState<'upload' | 'link'>('upload');
+  const [fileMode, setFileMode] = useState<'upload' | 'link'>('link');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -208,9 +187,9 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
     title: '',
     description: '',
     price: 0,
-    category: Category.EBOOKS,
+    category: Category.GRAPHICS,
     isFree: false,
-    fileType: 'PDF',
+    fileType: 'LINK',
     fileSize: '0 MB',
     imageUrl: '',
     additionalImages: [],
@@ -222,18 +201,13 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
 
   const [formData, setFormData] = useState<Partial<Product>>(initialFormState);
 
-  const filteredProducts = products.filter(p => {
-    const matchesSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
   const openAddModal = () => {
     setEditingId(null);
     setFormData(initialFormState);
     setPreviewImg('');
     setAdditionalPreviews([]);
     setAttachedFileName('');
+    setFileMode('link');
     setIsModalOpen(true);
   };
 
@@ -242,7 +216,7 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
     setFormData(product);
     setPreviewImg(product.imageUrl);
     setAdditionalPreviews(product.additionalImages || []);
-    setAttachedFileName(product.fileType === 'LINK' ? '' : 'Current Package');
+    setAttachedFileName(product.fileType !== 'LINK' ? 'Current Package' : '');
     setFileMode(product.fileType === 'LINK' ? 'link' : 'upload');
     setIsModalOpen(true);
   };
@@ -250,8 +224,8 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 400000) {
-        alert("Image too large (>400KB).");
+      if (file.size > 5000000) { // Increased to 5MB
+        alert("Image too large. Please use a file under 5MB.");
         return;
       }
       const reader = new FileReader();
@@ -268,7 +242,7 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
     const files = e.target.files;
     if (files) {
       Array.from(files).forEach((file: File) => {
-        if (file.size > 250000) return;
+        if (file.size > 2000000) return; // 2MB for additional
         const reader = new FileReader();
         reader.onloadend = () => {
           const base64 = reader.result as string;
@@ -302,34 +276,55 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
     }
   };
 
-  const handleSaveProduct = (e: React.FormEvent) => {
+  const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.fileUrl && !editingId) {
-      alert("Please attach a file.");
+    if (!formData.fileUrl) {
+      alert("Error: No delivery source attached. Please upload a file or provide a link.");
       return;
     }
 
+    setIsSaving(true);
     try {
-      if (editingId) {
-        const updated = products.map(p => p.id === editingId ? { ...p, ...formData as Product } : p);
-        setProducts(updated);
-      } else {
-        const product: Product = {
-          ...formData as Product,
-          id: Math.random().toString(36).substr(2, 9),
-          imageUrl: formData.imageUrl || 'https://picsum.photos/seed/default/800/600',
-        };
-        setProducts([product, ...products]);
+      const productPayload = {
+        title: formData.title,
+        description: formData.description,
+        price: formData.price,
+        category: formData.category,
+        image_url: formData.imageUrl,
+        additional_images: formData.additionalImages,
+        file_url: formData.fileUrl,
+        file_type: formData.fileType,
+        file_size: formData.fileSize,
+        is_free: formData.isFree,
+        rating: formData.rating || 5.0,
+        sales_count: formData.salesCount || 0
+      };
+
+      if (isSupabaseConfigured) {
+        if (editingId) {
+          const { error } = await supabase.from('products').update(productPayload).eq('id', editingId);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('products').insert([productPayload]);
+          if (error) throw error;
+        }
       }
-      setIsModalOpen(false);
-    } catch (e) {
-      alert("Storage error. Try using smaller images.");
+
+      // Refresh local list (handled by useEffect in App.tsx usually, but we force update here)
+      window.location.reload(); 
+    } catch (err: any) {
+      alert("Error saving to database: " + err.message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const deleteProduct = (id: string) => {
-    if (confirm("Delete this resource?")) {
-      setProducts(products.filter(p => p.id !== id));
+  const deleteProduct = async (id: string) => {
+    if (confirm("Permanently delete this resource from the marketplace?")) {
+      if (isSupabaseConfigured) {
+        await supabase.from('products').delete().eq('id', id);
+        window.location.reload();
+      }
     }
   };
 
@@ -337,133 +332,123 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
     <div className="space-y-10 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div className="space-y-2">
-          <h1 className="text-4xl md:text-5xl font-black text-white">Digital Inventory</h1>
+          <h1 className="text-4xl md:text-5xl font-black text-white">Inventory</h1>
           <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Manage your storefront resources</p>
         </div>
-        <button 
-          onClick={openAddModal}
-          className="w-full md:w-auto px-10 py-5 bg-indigo-600 text-white rounded-[24px] font-black text-lg flex items-center justify-center gap-3 shadow-2xl hover:scale-105 transition-all active:scale-95"
-        >
-          <Plus size={24} /> Create Resource
+        <button onClick={openAddModal} className="px-10 py-5 bg-indigo-600 text-white rounded-[24px] font-black text-lg flex items-center justify-center gap-3 shadow-2xl hover:scale-105 transition-all">
+          <Plus size={24} /> New Resource
         </button>
       </div>
 
-      <div className="bg-slate-900 border border-slate-800 rounded-[32px] md:rounded-[48px] overflow-hidden overflow-x-auto">
-        <table className="w-full text-left min-w-[700px]">
+      <div className="bg-slate-900 border border-slate-800 rounded-[32px] md:rounded-[48px] overflow-hidden">
+        <table className="w-full text-left">
           <thead className="bg-slate-800/50 border-b border-slate-800 text-[10px] font-black text-slate-500 uppercase tracking-widest">
             <tr>
               <th className="px-10 py-8">Resource</th>
-              <th className="px-6 py-8 text-center">Downloads</th>
+              <th className="px-6 py-8">Sales</th>
               <th className="px-6 py-8">Pricing</th>
               <th className="px-10 py-8 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800">
-            {filteredProducts.map(p => (
-              <tr key={p.id} className="hover:bg-slate-800/30 transition-all group">
+            {products.map(p => (
+              <tr key={p.id} className="hover:bg-slate-800/30 transition-all">
                 <td className="px-10 py-8">
                   <div className="flex items-center gap-4">
-                    <img src={p.imageUrl} className="w-16 h-16 rounded-2xl object-cover border border-slate-800 group-hover:border-indigo-500/50 transition-colors" />
-                    <div>
-                      <p className="font-black text-white text-lg truncate mb-1">{p.title}</p>
-                      <span className="px-2 py-0.5 bg-slate-800 rounded-lg text-[10px] font-black text-slate-400 uppercase">{p.category}</span>
-                    </div>
+                    <img src={p.imageUrl} className="w-14 h-14 rounded-xl object-cover border border-slate-800" />
+                    <p className="font-black text-white truncate max-w-[200px]">{p.title}</p>
                   </div>
                 </td>
-                <td className="px-6 py-8 text-center text-2xl font-black text-white">{p.salesCount}</td>
-                <td className="px-6 py-8 text-2xl font-black text-indigo-400">{p.isFree ? 'FREE' : `$${p.price.toFixed(2)}`}</td>
+                <td className="px-6 py-8 font-black text-white">{p.salesCount}</td>
+                <td className="px-6 py-8 font-black text-indigo-400">{p.isFree ? 'FREE' : `$${p.price}`}</td>
                 <td className="px-10 py-8 text-right space-x-3">
-                  <button 
-                    onClick={() => openEditModal(p)} 
-                    className="inline-flex w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 text-indigo-400 hover:bg-indigo-600 hover:text-white items-center justify-center transition-all group/btn"
-                    title="Edit Product"
-                  >
-                    <Edit3 size={18} className="group-hover/btn:scale-110 transition-transform" />
-                  </button>
-                  <button 
-                    onClick={() => deleteProduct(p.id)} 
-                    className="inline-flex w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 text-slate-500 hover:text-rose-500 hover:border-rose-500/50 items-center justify-center transition-all"
-                    title="Delete Product"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                  <button onClick={() => openEditModal(p)} className="inline-flex w-10 h-10 rounded-xl bg-slate-800 text-indigo-400 items-center justify-center transition-all"><Edit3 size={16} /></button>
+                  <button onClick={() => deleteProduct(p.id)} className="inline-flex w-10 h-10 rounded-xl bg-slate-800 text-rose-500 items-center justify-center transition-all"><Trash2 size={16} /></button>
                 </td>
               </tr>
             ))}
-            {filteredProducts.length === 0 && (
-              <tr>
-                <td colSpan={4} className="py-24 text-center text-slate-600 font-bold uppercase tracking-widest">No products found</td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>
 
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-md overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-5xl rounded-[40px] md:rounded-[64px] shadow-2xl overflow-hidden relative animate-in zoom-in duration-300">
-            <div className="grid grid-cols-1 lg:grid-cols-2 max-h-[90vh] overflow-y-auto scrollbar-hide">
-              {/* Visual Assets Panel */}
+          <div className="bg-slate-900 border border-slate-800 w-full max-w-5xl rounded-[40px] shadow-2xl overflow-hidden relative animate-in zoom-in">
+            <div className="grid grid-cols-1 lg:grid-cols-2 max-h-[90vh] overflow-y-auto">
+              {/* Asset Section */}
               <div className="p-10 lg:p-16 bg-slate-800/30 border-r border-slate-800 space-y-12">
                 <h3 className="text-3xl font-black text-white">Visual Assets</h3>
-                <div className="space-y-8">
-                  <div 
-                    onClick={() => imageInputRef.current?.click()}
-                    className="aspect-video rounded-[40px] border-4 border-dashed border-slate-700 hover:border-indigo-500/50 cursor-pointer overflow-hidden flex flex-col items-center justify-center relative group"
-                  >
-                    {previewImg ? <img src={previewImg} className="w-full h-full object-cover" /> : <ImageIcon size={48} className="text-slate-600 group-hover:text-indigo-500 transition-colors" />}
-                    <input type="file" hidden ref={imageInputRef} accept="image/*" onChange={handleImageUpload} />
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                      <span>Gallery Images</span>
-                      <button type="button" onClick={() => additionalImagesRef.current?.click()} className="text-indigo-400 hover:text-indigo-300">Add More +</button>
+                <div 
+                  onClick={() => imageInputRef.current?.click()}
+                  className="aspect-video rounded-[40px] border-4 border-dashed border-slate-700 hover:border-indigo-500 cursor-pointer overflow-hidden flex items-center justify-center group bg-slate-900"
+                >
+                  {previewImg ? <img src={previewImg} className="w-full h-full object-cover" /> : <ImageIcon size={48} className="text-slate-600" />}
+                  <input type="file" hidden ref={imageInputRef} accept="image/*" onChange={handleImageUpload} />
+                </div>
+                
+                <div className="space-y-4">
+                   <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                    <span>File Fulfillment</span>
+                    <div className="flex bg-slate-900 p-1 rounded-lg border border-slate-800">
+                      <button onClick={() => setFileMode('link')} className={`px-3 py-1 rounded-md transition-all ${fileMode === 'link' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>Link</button>
+                      <button onClick={() => setFileMode('upload')} className={`px-3 py-1 rounded-md transition-all ${fileMode === 'upload' ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>Upload</button>
                     </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      {additionalPreviews.map((img, idx) => (
-                        <div key={idx} className="aspect-video rounded-xl overflow-hidden border border-slate-800 relative group">
-                          <img src={img} className="w-full h-full object-cover" />
-                        </div>
-                      ))}
-                      <div onClick={() => additionalImagesRef.current?.click()} className="aspect-video rounded-xl border-2 border-dashed border-slate-800 flex items-center justify-center cursor-pointer hover:bg-slate-800/50 transition-colors">
-                        <Plus size={20} className="text-slate-600" />
+                   </div>
+                   
+                   {fileMode === 'link' ? (
+                     <div className="space-y-3">
+                        <input 
+                          type="url" 
+                          placeholder="Google Drive / External URL"
+                          className="w-full px-6 py-4 bg-slate-900 border border-slate-800 rounded-2xl font-bold outline-none focus:border-indigo-500"
+                          value={formData.fileUrl === 'Link source' ? '' : formData.fileUrl}
+                          onChange={e => setFormData({...formData, fileUrl: e.target.value, fileType: 'LINK', fileSize: 'External'})}
+                        />
+                        <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest text-center">Use this for files larger than 50MB</p>
+                     </div>
+                   ) : (
+                     <div 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="p-8 rounded-3xl bg-slate-900 border-2 border-dashed border-slate-800 hover:border-indigo-500 cursor-pointer flex flex-col items-center justify-center text-center gap-3"
+                      >
+                        <Upload size={32} className="text-indigo-400" />
+                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{attachedFileName || "Select Source File"}</span>
+                        <input type="file" hidden ref={fileInputRef} onChange={handleFileUpload} />
                       </div>
-                    </div>
-                    <input type="file" hidden ref={additionalImagesRef} multiple accept="image/*" onChange={handleAdditionalUpload} />
-                  </div>
+                   )}
                 </div>
               </div>
 
-              {/* Form Panel */}
+              {/* Detail Section */}
               <div className="p-10 lg:p-16 space-y-10">
-                <div className="flex justify-between items-start">
-                  <h2 className="text-4xl font-black text-white">{editingId ? 'Edit Resource' : 'New Resource'}</h2>
-                  <button onClick={() => setIsModalOpen(false)} className="p-4 bg-slate-800 border border-slate-700 rounded-2xl hover:text-rose-400 transition-colors"><X size={24} /></button>
+                <div className="flex justify-between items-center">
+                  <h2 className="text-4xl font-black text-white">{editingId ? 'Edit' : 'Publish'}</h2>
+                  <button onClick={() => setIsModalOpen(false)} className="p-3 bg-slate-800 text-slate-500 rounded-xl hover:text-rose-400"><X /></button>
                 </div>
                 <form onSubmit={handleSaveProduct} className="space-y-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Asset Title</label>
-                    <input required placeholder="Resource Title" className="w-full px-6 py-5 bg-slate-800/50 border border-slate-700 rounded-3xl outline-none focus:border-indigo-500 font-bold" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Narrative</label>
-                    <textarea required rows={4} placeholder="Description" className="w-full px-6 py-5 bg-slate-800/50 border border-slate-700 rounded-3xl outline-none focus:border-indigo-500 font-bold resize-none" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+                    <input required className="w-full px-6 py-4 bg-slate-800/50 border border-slate-700 rounded-2xl font-bold outline-none focus:border-indigo-500" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
                   </div>
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Category</label>
-                      <select className="w-full px-6 py-5 bg-slate-800/50 border border-slate-700 rounded-3xl font-bold outline-none focus:border-indigo-500" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value as Category})}>
+                      <select className="w-full px-6 py-4 bg-slate-800/50 border border-slate-700 rounded-2xl font-bold outline-none" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value as Category})}>
                         {Object.values(Category).map(cat => <option key={cat} value={cat}>{cat}</option>)}
                       </select>
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Price ($)</label>
-                      <input type="number" step="0.01" className="w-full px-6 py-5 bg-slate-800/50 border border-slate-700 rounded-3xl font-bold outline-none focus:border-indigo-500" value={formData.price} onChange={e => setFormData({...formData, price: parseFloat(e.target.value) || 0, isFree: parseFloat(e.target.value) === 0})} />
+                      <input type="number" step="0.01" className="w-full px-6 py-4 bg-slate-800/50 border border-slate-700 rounded-2xl font-bold outline-none" value={formData.price} onChange={e => setFormData({...formData, price: parseFloat(e.target.value) || 0, isFree: parseFloat(e.target.value) === 0})} />
                     </div>
                   </div>
-                  <button type="submit" className="w-full py-6 bg-indigo-600 text-white font-black text-xl rounded-3xl shadow-2xl hover:bg-indigo-700 transition-all active:scale-95 flex items-center justify-center gap-2">
-                    {editingId ? <><CheckCircle size={24} /> Update Resource</> : <><Plus size={24} /> Publish Resource</>}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Narrative</label>
+                    <textarea rows={4} className="w-full px-6 py-4 bg-slate-800/50 border border-slate-700 rounded-2xl font-bold resize-none outline-none focus:border-indigo-500" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+                  </div>
+                  <button type="submit" disabled={isSaving} className="w-full py-6 bg-indigo-600 text-white font-black text-xl rounded-3xl shadow-2xl hover:bg-indigo-700 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3">
+                    {isSaving ? <Loader2 className="animate-spin" /> : <Globe size={24} />}
+                    {editingId ? 'Update & Sync' : 'Publish to Market'}
                   </button>
                 </form>
               </div>
@@ -476,76 +461,41 @@ const AdminProducts: React.FC<{ products: Product[], setProducts: (p: Product[])
 };
 
 const AdminRequests: React.FC = () => {
-  const [requests, setRequests] = useState<ProductRequest[]>(() => {
-    try {
-        const saved = localStorage.getItem('nova_requests');
-        return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-        return [];
-    }
-  });
+  const [requests, setRequests] = useState<ProductRequest[]>([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('nova_requests');
+    if (saved) setRequests(JSON.parse(saved));
+  }, []);
 
   const handleDelete = (id: string) => {
-    if (confirm("Delete this user request?")) {
-      const filtered = requests.filter(r => r.id !== id);
-      setRequests(filtered);
-      localStorage.setItem('nova_requests', JSON.stringify(filtered));
-    }
-  };
-
-  const handleStatusChange = (id: string, status: 'pending' | 'reviewed' | 'fulfilled') => {
-    const updated = requests.map(r => r.id === id ? { ...r, status } : r);
-    setRequests(updated);
-    localStorage.setItem('nova_requests', JSON.stringify(updated));
+    const filtered = requests.filter(r => r.id !== id);
+    setRequests(filtered);
+    localStorage.setItem('nova_requests', JSON.stringify(filtered));
   };
 
   return (
     <div className="space-y-12 animate-in fade-in duration-700">
-      <div className="space-y-2">
-        <h1 className="text-4xl md:text-5xl font-black text-white">Community Inquiries</h1>
-        <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Monitor user-requested assets</p>
-      </div>
-      <div className="bg-slate-900 border border-slate-800 rounded-[48px] overflow-hidden overflow-x-auto">
-        <table className="w-full text-left min-w-[600px]">
+      <h1 className="text-4xl font-black text-white">Community Requests</h1>
+      <div className="bg-slate-900 border border-slate-800 rounded-[48px] overflow-hidden">
+        <table className="w-full text-left">
           <thead className="bg-slate-800/50 border-b border-slate-800 text-[10px] font-black text-slate-500 uppercase tracking-widest">
             <tr>
-              <th className="px-10 py-8">Inquiry</th>
-              <th className="px-6 py-8 text-center">Interest</th>
-              <th className="px-6 py-8">Workflow</th>
+              <th className="px-10 py-8">Topic</th>
+              <th className="px-6 py-8">Votes</th>
               <th className="px-10 py-8 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800">
             {requests.map(r => (
-              <tr key={r.id} className="hover:bg-slate-800/30 transition-all group">
-                <td className="px-10 py-8">
-                  <p className="font-black text-white text-lg">{r.title}</p>
-                  <p className="text-xs text-slate-500 truncate">{r.description}</p>
-                </td>
-                <td className="px-6 py-8 text-center text-indigo-400 font-black">{r.votes}</td>
-                <td className="px-6 py-8">
-                  <select 
-                    value={r.status || 'pending'} 
-                    onChange={e => handleStatusChange(r.id, e.target.value as any)}
-                    className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-xs font-bold outline-none focus:border-indigo-500"
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="reviewed">Reviewed</option>
-                    <option value="fulfilled">Fulfilled</option>
-                  </select>
-                </td>
+              <tr key={r.id} className="hover:bg-slate-800/30">
+                <td className="px-10 py-8"><p className="font-black text-white">{r.title}</p></td>
+                <td className="px-6 py-8 text-indigo-400 font-black">{r.votes}</td>
                 <td className="px-10 py-8 text-right">
-                  <button onClick={() => handleDelete(r.id)} className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 text-slate-500 hover:text-rose-500 transition-all flex items-center justify-center ml-auto">
-                    <Trash2 size={18} />
-                  </button>
+                  <button onClick={() => handleDelete(r.id)} className="text-rose-500"><Trash2 size={18} /></button>
                 </td>
               </tr>
             ))}
-            {requests.length === 0 && (
-              <tr>
-                <td colSpan={4} className="py-24 text-center text-slate-600 font-bold uppercase tracking-widest">No active requests</td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>
